@@ -2,6 +2,7 @@
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
   const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear() };
+  let deferredInstallPrompt = null;
 
   const screenMeta = {
     day: ["Meu Dia", ""],
@@ -231,6 +232,30 @@
     }
   }
 
+  function isInstalledApp() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  }
+
+  function updateInstallPanel() {
+    const panel = $("#installPanel");
+    if (!panel) return;
+    panel.classList.toggle("hidden", isInstalledApp());
+  }
+
+  async function installApp() {
+    if (isInstalledApp()) return showToast("O aplicativo já está salvo neste aparelho.");
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      updateInstallPanel();
+      return choice.outcome === "accepted"
+        ? showToast("Aplicativo salvo com sucesso.")
+        : showToast("Instalação cancelada.");
+    }
+    alert("Para salvar como aplicativo:\n\nNo Android/Chrome: toque no menu de três pontinhos e escolha Instalar app ou Adicionar à tela inicial.\n\nNo iPhone/Safari: toque em Compartilhar e depois em Adicionar à Tela de Início.");
+  }
+
   async function saveOrder(order, reason) {
     await AtelieDB.snapshot(reason);
     await AtelieDB.put("orders", order);
@@ -255,6 +280,7 @@
     $("#loginForm").classList.toggle("hidden", mode !== "login");
     $("#authTitle").textContent = mode === "login" ? "Que bom te ver!" : mode === "create" ? "Crie sua senha" : "Bem-vinda!";
     $("#authText").textContent = mode === "login" ? "Digite sua senha para entrar." : mode === "create" ? "Ela protege o acesso neste dispositivo." : "Vamos organizar seu ateliê?";
+    updateInstallPanel();
     if (mode === "login") {
       const remembered = getRememberedPassword();
       $("#loginPassword").value = remembered;
@@ -1409,6 +1435,7 @@
   document.addEventListener("click", async (event) => {
     const target = event.target.closest("button");
     if (!target) return;
+    if (target.id === "installAppBtn") return installApp();
     if (target.id === "startBtn") {
       await AtelieDB.setSetting("welcomed", true);
       return showAuth("create");
@@ -1593,6 +1620,18 @@
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js"));
   }
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallPanel();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    updateInstallPanel();
+    showToast("Ateliê em Dia salvo como aplicativo.");
+  });
 
   checkAuth();
 })();
