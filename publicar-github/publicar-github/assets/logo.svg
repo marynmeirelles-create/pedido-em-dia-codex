@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 128" role="img" aria-label="Ateliê em Dia">
+  <rect x="22" y="16" width="86" height="86" rx="28" fill="#FF7BAC"/>
+  <circle cx="86" cy="38" r="17" fill="#7BFFCE"/>
+  <path d="M46 73c20-29 43-30 62 0" fill="none" stroke="#FFF5F7" stroke-width="10" stroke-linecap="round"/>
+  <path d="M64 42h-3a15 15 0 0 0 0 30h12" fill="none" stroke="#FFF5F7" stroke-width="8" stroke-linecap="round"/>
+  <text x="124" y="56" fill="#30262B" font-family="Poppins, Arial, sans-serif" font-size="28" font-weight="700">Ateliê</text>
+  <text x="124" y="86" fill="#FF7BAC" font-family="Poppins, Arial, sans-serif" font-size="28" font-weight="700">em Dia</text>
+</svg>
