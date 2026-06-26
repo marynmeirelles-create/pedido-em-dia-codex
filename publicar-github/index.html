@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FF7BAC">
     <title>Ateliê em Dia</title>
-    <link rel="manifest" href="manifest.json?v=23">
+    <link rel="manifest" href="manifest.json?v=25">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=25">
   </head>
   <body>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -44,6 +44,10 @@
         <form id="loginForm" class="auth-panel hidden">
           <label>Senha
             <input id="loginPassword" type="password" autocomplete="current-password" required>
+          </label>
+          <label class="remember-option">
+            <input id="rememberPassword" type="checkbox">
+            <span>Lembrar minha senha neste aparelho</span>
           </label>
           <button class="btn btn-primary full" type="submit">Entrar</button>
           <p class="small-note">Seus dados ficam salvos neste dispositivo. Faça backup regularmente.</p>
@@ -92,8 +96,8 @@
     </div>
 
     <input id="restoreFile" type="file" accept="application/json,.json" class="hidden">
-    <script src="db.js?v=23"></script>
-    <script src="backup.js?v=23"></script>
-    <script src="script.js?v=23"></script>
+    <script src="db.js?v=25"></script>
+    <script src="backup.js?v=25"></script>
+    <script src="script.js?v=25"></script>
   </body>
 </html>

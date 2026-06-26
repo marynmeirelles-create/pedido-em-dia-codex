@@ -1,12 +1,12 @@
-const CACHE_NAME = "atelie-em-dia-v23";
+const CACHE_NAME = "atelie-em-dia-v25";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=23",
-  "./script.js?v=23",
-  "./db.js?v=23",
-  "./backup.js?v=23",
-  "./manifest.json?v=23",
+  "./style.css?v=25",
+  "./script.js?v=25",
+  "./db.js?v=25",
+  "./backup.js?v=25",
+  "./manifest.json?v=25",
   "./assets/atelie-em-dia-logo.png",
   "./assets/atelie-em-dia-logo-transparent.png",
   "./assets/logo.svg",

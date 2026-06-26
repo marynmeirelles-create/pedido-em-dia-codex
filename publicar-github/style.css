@@ -118,6 +118,22 @@ h3 { font-size: 1rem; margin-bottom: 10px; }
 
 .auth-panel { margin-top: 24px; display: grid; gap: 14px; text-align: left; }
 
+.remember-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  color: var(--muted);
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.remember-option input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--pink);
+}
+
 label {
   display: grid;
   gap: 7px;
@@ -321,9 +337,20 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   align-items: center;
   text-align: left;
   border-left-width: 6px;
+  min-width: 0;
 }
 
 .order-row button { text-align: left; background: transparent; padding: 0; color: inherit; }
+
+.order-row button,
+.order-row strong,
+.order-row span,
+.order-row small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 .link-panel {
   text-align: left;
@@ -787,6 +814,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   display: grid;
   align-content: start;
   gap: 5px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .day-cell.today {
@@ -800,10 +829,22 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
 }
 
 .holiday-label {
+  display: block;
   color: #b42335;
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.25;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.day-cell strong,
+.day-cell .muted {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .holiday-list {
@@ -949,7 +990,15 @@ a.btn {
   .client-grid, .segmented { grid-template-columns: 1fr; }
   .span-2 { grid-column: auto; }
   .calendar { gap: 6px; }
-  .day-cell { min-height: 64px; padding: 7px; font-size: 0.8rem; }
+  .day-cell { min-height: 68px; padding: 6px 5px; font-size: 0.74rem; }
+  .holiday-label {
+    font-size: 0.56rem;
+    line-height: 1.12;
+  }
+  .day-cell .muted {
+    font-size: 0.62rem;
+    line-height: 1.15;
+  }
   .agenda-head { align-items: stretch; }
   .agenda-controls, .holiday-row { grid-template-columns: 1fr; }
   .order-row { grid-template-columns: 1fr; }

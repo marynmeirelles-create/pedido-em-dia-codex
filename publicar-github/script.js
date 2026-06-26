@@ -212,6 +212,25 @@
     state.clients = (await AtelieDB.getAll("clients")).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }
 
+  const rememberedPasswordKey = "atelieEmDiaRememberedPassword";
+
+  function getRememberedPassword() {
+    try {
+      return localStorage.getItem(rememberedPasswordKey) || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function setRememberedPassword(password) {
+    try {
+      if (password) localStorage.setItem(rememberedPasswordKey, password);
+      else localStorage.removeItem(rememberedPasswordKey);
+    } catch (error) {
+      showToast("Não foi possível lembrar a senha neste navegador.");
+    }
+  }
+
   async function saveOrder(order, reason) {
     await AtelieDB.snapshot(reason);
     await AtelieDB.put("orders", order);
@@ -236,6 +255,11 @@
     $("#loginForm").classList.toggle("hidden", mode !== "login");
     $("#authTitle").textContent = mode === "login" ? "Que bom te ver!" : mode === "create" ? "Crie sua senha" : "Bem-vinda!";
     $("#authText").textContent = mode === "login" ? "Digite sua senha para entrar." : mode === "create" ? "Ela protege o acesso neste dispositivo." : "Vamos organizar seu ateliê?";
+    if (mode === "login") {
+      const remembered = getRememberedPassword();
+      $("#loginPassword").value = remembered;
+      $("#rememberPassword").checked = Boolean(remembered);
+    }
   }
 
   async function enterApp() {
@@ -1494,7 +1518,9 @@
   $("#loginForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const stored = await AtelieDB.getSetting("passwordHash");
-    if (await hash($("#loginPassword").value) !== stored) return showToast("Senha incorreta.");
+    const password = $("#loginPassword").value;
+    if (await hash(password) !== stored) return showToast("Senha incorreta.");
+    setRememberedPassword($("#rememberPassword").checked ? password : "");
     await enterApp();
   });
 
