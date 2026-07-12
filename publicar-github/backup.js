@@ -1,5 +1,6 @@
 ﻿(function () {
   const BACKUP_KIND = "pedido-em-dia-backup";
+  const LEGACY_BACKUP_KINDS = ["atelie-em-dia-backup"];
 
   function pad(value) {
     return String(value).padStart(2, "0");
@@ -38,7 +39,9 @@
   async function importBackup(file) {
     const text = await file.text();
     const parsed = JSON.parse(text);
-    if (!parsed || parsed.kind !== BACKUP_KIND || !parsed.data) {
+    const validKind = parsed && (parsed.kind === BACKUP_KIND || LEGACY_BACKUP_KINDS.includes(parsed.kind));
+    const validData = parsed && parsed.data && (Array.isArray(parsed.data.orders) || Array.isArray(parsed.data.clients) || Array.isArray(parsed.data.settings));
+    if (!validKind && !validData) {
       throw new Error("Arquivo de backup inválido.");
     }
     await AtelieDB.snapshot("Antes de restaurar backup");
@@ -56,3 +59,5 @@
 
   window.AtelieBackup = { exportBackup, importBackup };
 })();
+
+

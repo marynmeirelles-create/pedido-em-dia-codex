@@ -3,6 +3,7 @@
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
   const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear() };
   let deferredInstallPrompt = null;
+  let installReminderDismissed = false;
 
   const screenMeta = {
     day: ["Meu Dia", ""],
@@ -1494,7 +1495,12 @@
   document.addEventListener("click", async (event) => {
     const target = event.target.closest("button");
     if (!target) return;
-    if (target.id === "installAppBtn") return installApp();
+    if (target.id === "installAppBtn" || target.id === "installReminderBtn") return installApp();
+    if (target.id === "dismissInstallReminderBtn") {
+      installReminderDismissed = true;
+      updateInstallPanel();
+      return;
+    }
     if (target.id === "startBtn") {
       await AtelieDB.setSetting("welcomed", true);
       return showAuth("create");
@@ -1701,3 +1707,4 @@
 
   checkAuth();
 })();
+

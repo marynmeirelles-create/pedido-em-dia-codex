@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FF7BAC">
     <title>Pedido em Dia</title>
-    <link rel="manifest" href="manifest.json?v=31">
+    <link rel="manifest" href="manifest.json?v=32">
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,8 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=31">
-    <link rel="stylesheet" href="layout-fix.css?v=31">
+    <link rel="stylesheet" href="style.css?v=32">
+    <link rel="stylesheet" href="layout-fix.css?v=32">
   </head>
   <body>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -75,6 +75,15 @@
         <button id="moreBtn" class="icon-btn" aria-label="Abrir menu">☰</button>
       </header>
 
+
+      <section id="installReminder" class="install-reminder hidden">
+        <div>
+          <strong>Quer usar como aplicativo?</strong>
+          <p>Salve o Pedido em Dia na tela inicial do celular para abrir mais rápido.</p>
+        </div>
+        <button id="installReminderBtn" class="btn btn-secondary" type="button">Salvar app</button>
+        <button id="dismissInstallReminderBtn" class="icon-btn" aria-label="Fechar lembrete">×</button>
+      </section>
       <section id="backupReminder" class="backup-reminder hidden">
         <div>
           <strong>Que tal proteger sua agenda?</strong>
@@ -106,10 +115,12 @@
     </div>
 
     <input id="restoreFile" type="file" accept="application/json,.json" class="hidden">
-    <script src="db.js?v=31"></script>
-    <script src="backup.js?v=31"></script>
-    <script src="compat-fix.js?v=31"></script>
-    <script src="script.js?v=31"></script>
+    <script src="db.js?v=32"></script>
+    <script src="backup.js?v=32"></script>
+    <script src="compat-fix.js?v=32"></script>
+    <script src="script.js?v=32"></script>
   </body>
 </html>
+
+
 
