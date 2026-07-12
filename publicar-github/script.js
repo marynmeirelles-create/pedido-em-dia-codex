@@ -268,9 +268,11 @@
   }
 
   function updateInstallPanel() {
+    const installed = isInstalledApp();
     const panel = $("#installPanel");
-    if (!panel) return;
-    panel.classList.toggle("hidden", isInstalledApp());
+    if (panel) panel.classList.toggle("hidden", installed);
+    const reminder = $("#installReminder");
+    if (reminder) reminder.classList.toggle("hidden", installed || installReminderDismissed);
   }
 
   async function installApp() {
@@ -1707,4 +1709,5 @@
 
   checkAuth();
 })();
+
 
