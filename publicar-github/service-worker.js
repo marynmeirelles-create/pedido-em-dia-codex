@@ -1,22 +1,22 @@
-const CACHE_NAME = "atelie-em-dia-v29";
+﻿const CACHE_NAME = "pedido-em-dia-v30";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=29",
-  "./layout-fix.css?v=29",
-  "./script.js?v=29",
-  "./compat-fix.js?v=29",
-  "./db.js?v=29",
-  "./backup.js?v=29",
-  "./manifest.json?v=29",
-  "./assets/atelie-em-dia-logo.png",
-  "./assets/atelie-em-dia-logo-transparent.png",
+  "./style.css?v=30",
+  "./layout-fix.css?v=30",
+  "./script.js?v=30",
+  "./compat-fix.js?v=30",
+  "./db.js?v=30",
+  "./backup.js?v=30",
+  "./manifest.json?v=30",
+  "./assets/pedido-em-dia-logo.png",
+  "./assets/pedido-em-dia-logo-transparent.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
   "./assets/apple-touch-icon.png",
   "./assets/logo.svg",
   "./assets/icon.svg",
-  "./assets/favicon.svg"
+  "./assets/favicon.png"
 ];
 
 self.addEventListener("install", (event) => {

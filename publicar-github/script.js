@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
   const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear() };
@@ -58,6 +58,18 @@
   function formatDateTime(date) {
     if (!date) return "Nenhum backup realizado ainda";
     return new Date(date).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function monthKeyFromDate(date) {
+    return (date || todayISO()).slice(0, 7);
+  }
+
+  function saleMonthKey(order) {
+    return monthKeyFromDate(order.createdAt || order.deliveryDate || todayISO());
+  }
+
+  function paymentMonthKey(order) {
+    return monthKeyFromDate(order.paymentUpdatedAt || order.updatedAt || order.createdAt || order.deliveryDate || todayISO());
   }
 
   function showToast(message) {
@@ -213,7 +225,8 @@
     state.clients = (await AtelieDB.getAll("clients")).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }
 
-  const rememberedPasswordKey = "atelieEmDiaRememberedPassword";
+  const rememberedPasswordKey = "PedidoEmDiaRememberedPassword";
+  const authenticatedSessionKey = "PedidoEmDiaAuthenticatedSession";
 
   function getRememberedPassword() {
     try {
@@ -230,6 +243,23 @@
     } catch (error) {
       showToast("Não foi possível lembrar a senha neste navegador.");
     }
+  }
+
+  function hasAuthenticatedSession() {
+    try {
+      return sessionStorage.getItem(authenticatedSessionKey) === "1";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function rememberAuthenticatedSession() {
+    try {
+      sessionStorage.setItem(authenticatedSessionKey, "1");
+    } catch (error) {
+      return false;
+    }
+    return true;
   }
 
   function isInstalledApp() {
@@ -269,6 +299,7 @@
     const welcomed = await AtelieDB.getSetting("welcomed", false);
     if (!welcomed) return showAuth("welcome");
     if (!passwordHash) return showAuth("create");
+    if (hasAuthenticatedSession()) return enterApp();
     showAuth("login");
   }
 
@@ -289,6 +320,7 @@
   }
 
   async function enterApp() {
+    rememberAuthenticatedSession();
     $("#auth").classList.add("hidden");
     $("#app").classList.remove("hidden");
     await loadOrders();
@@ -395,11 +427,14 @@
     const tasks = todayTasks();
     const orders = activeOrders();
     const monthKey = todayISO().slice(0, 7);
-    const monthOrders = orders.filter((order) => ((order.deliveryDate || order.createdAt || "").slice(0, 7)) === monthKey);
     const openOrders = orders.filter((order) => !order.done);
     const pendingPaymentOrders = orders.filter((order) => balance(order) > 0);
-    const receivedThisMonth = monthOrders.reduce((sum, order) => sum + paidAmount(order), 0);
-    const soldThisMonth = monthOrders.reduce((sum, order) => sum + orderTotal(order), 0);
+    const receivedThisMonth = orders
+      .filter((order) => paidAmount(order) > 0 && paymentMonthKey(order) === monthKey)
+      .reduce((sum, order) => sum + paidAmount(order), 0);
+    const soldThisMonth = orders
+      .filter((order) => saleMonthKey(order) === monthKey)
+      .reduce((sum, order) => sum + orderTotal(order), 0);
     const listedOrders = orders.slice().sort((a, b) => {
       if (a.done !== b.done) return Number(a.done) - Number(b.done);
       return (a.deliveryDate || "").localeCompare(b.deliveryDate || "");
@@ -824,7 +859,7 @@
           <span class="backup-number">1</span>
           <h3>Fazer Backup</h3>
           <p class="muted">Ao clicar no botão, o aplicativo gera um arquivo com todos os pedidos cadastrados. Salve esse arquivo onde preferir: Área de Trabalho, Documentos, Downloads, pendrive, HD externo, Google Drive, OneDrive, Dropbox, iCloud Drive ou outra pasta escolhida por você.</p>
-          <p class="muted">O nome segue um padrão parecido com <strong>AtelieEmDia_Backup_2026-06-19.json</strong>, para facilitar encontrar a versão mais recente.</p>
+          <p class="muted">O nome segue um padrão parecido com <strong>PedidoEmDia_Backup_2026-06-19.json</strong>, para facilitar encontrar a versão mais recente.</p>
           <button class="btn btn-primary full" data-backup>Salvar Backup Agora</button>
         </div>
         <div class="card backup-card">
@@ -865,7 +900,7 @@
           <span class="backup-number">6</span>
           <h3>Troquei de celular. Como recuperar minha agenda?</h3>
           <ol class="steps">
-            <li>Instale novamente o Ateliê em Dia.</li>
+            <li>Instale novamente o Pedido em Dia.</li>
             <li>Abra o aplicativo.</li>
             <li>Acesse Backup.</li>
             <li>Clique em Restaurar Backup.</li>
@@ -1089,7 +1124,7 @@
 <body>
   <button class="no-print" onclick="window.print()">Imprimir</button>
   <section class="header">
-    <img class="logo" src="assets/atelie-em-dia-logo-transparent.png" alt="Ateliê em Dia">
+    <img class="logo" src="assets/pedido-em-dia-logo-transparent.png" alt="Pedido em Dia">
     <div>
       <h1>Checklist de PRODUÇÃO</h1>
       <p>${escapeHtml(order.client || "Cliente sem nome")} · ${escapeHtml(order.theme || "Sem tema")}</p>
@@ -1161,7 +1196,7 @@
     lines.push("0.9 0.48 0.68 rg 50 770 46 46 re f");
     lines.push("0.49 1 0.81 rg 76 792 14 14 re f");
     lines.push("0 0 0 rg");
-    lines.push("BT /F2 14 Tf 106 798 Td (Atelie) Tj ET");
+    lines.push("BT /F2 14 Tf 106 798 Td (Pedido) Tj ET");
     lines.push("BT /F2 14 Tf 106 780 Td (em Dia) Tj ET");
     y = 744;
     text(50, 22, "Checklist de PRODUÇÃO", "F2");
@@ -1307,7 +1342,7 @@
         <div id="checklistDownloadBox" class="download-box hidden"></div>
         <div class="print-checklist" id="printChecklist">
           <div class="checklist-header">
-            <img src="assets/atelie-em-dia-logo-transparent.png" alt="">
+            <img src="assets/pedido-em-dia-logo-transparent.png" alt="">
             <div>
               <h2>Checklist de PRODUÇÃO</h2>
               <p>${order.client || "Cliente sem nome"} · ${order.theme || "Sem tema"}</p>
@@ -1359,6 +1394,12 @@
     })).filter((item) => item.name);
     const existing = state.orders.find((order) => order.id === state.editingId);
     const order = existing ? { ...existing } : { id: crypto.randomUUID(), createdAt: new Date().toISOString(), history: [] };
+    const now = new Date().toISOString();
+    const nextPaymentStatus = formData.get("paymentStatus");
+    const nextDeposit = Number(formData.get("deposit") || 0);
+    const paymentChanged = !existing
+      || existing.paymentStatus !== nextPaymentStatus
+      || Number(existing.deposit || 0) !== nextDeposit;
     Object.assign(order, {
       client: formData.get("client").trim(),
       phone: formData.get("phone").trim(),
@@ -1373,13 +1414,16 @@
       deliveryMethod: formData.get("deliveryMethod"),
       freightPayer: formData.get("freightPayer"),
       freightValue: Number(formData.get("freightValue") || 0),
-      paymentStatus: formData.get("paymentStatus"),
+      paymentStatus: nextPaymentStatus,
       depositPercent: formData.get("depositPercent"),
-      deposit: Number(formData.get("deposit") || 0),
+      deposit: nextDeposit,
       notes: formData.get("notes").trim(),
       items,
-      updatedAt: new Date().toISOString()
+      updatedAt: now
     });
+    order.paymentUpdatedAt = paymentChanged
+      ? now
+      : existing?.paymentUpdatedAt || existing?.updatedAt || existing?.createdAt || now;
     addHistory(order, existing ? "Pedido atualizado." : "Pedido criado.");
     return order;
   }
@@ -1389,7 +1433,22 @@
     if (!frequency) return;
     const lastBackupAt = await AtelieDB.getSetting("lastBackupAt");
     const due = !lastBackupAt || (Date.now() - new Date(lastBackupAt).getTime()) / 86400000 >= frequency;
-    $("#backupReminder").classList.toggle("hidden", !due);
+    if (due) {
+      showBackupSuggestion(
+        "Que tal proteger sua agenda?",
+        "Faz alguns dias que você não faz backup. Salve uma cópia para manter seus pedidos seguros."
+      );
+    } else {
+      $("#backupReminder").classList.add("hidden");
+    }
+  }
+
+  function showBackupSuggestion(title, text) {
+    const reminder = $("#backupReminder");
+    if (!reminder) return;
+    reminder.querySelector("strong").textContent = title;
+    reminder.querySelector("p").textContent = text;
+    reminder.classList.remove("hidden");
   }
 
   async function doBackup() {
@@ -1582,12 +1641,19 @@
     }
     if (event.target.id !== "orderForm") return;
     event.preventDefault();
+    const isNewOrder = !state.editingId;
     const order = collectOrder(event.target);
     if (!order.items.length) return showToast("Adicione pelo menos um item.");
     await saveOrder(order, state.editingId ? "Editar pedido" : "Criar pedido");
     showToast(state.editingId ? "Pedido atualizado." : "Pedido salvo.");
     renderDetail(order);
     setScreen("detail");
+    if (isNewOrder) {
+      showBackupSuggestion(
+        "Orçamento salvo. Faça um backup?",
+        "Recomendamos salvar uma cópia agora para proteger esse novo orçamento e manter sua agenda segura."
+      );
+    }
   });
 
   document.addEventListener("input", (event) => {
@@ -1630,7 +1696,7 @@
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
     updateInstallPanel();
-    showToast("Ateliê em Dia salvo como aplicativo.");
+    showToast("Pedido em Dia salvo como aplicativo.");
   });
 
   checkAuth();

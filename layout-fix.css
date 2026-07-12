@@ -1,0 +1,16 @@
+.summary-card {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.summary-card .value {
+  max-width: 100%;
+  font-size: clamp(1.05rem, 14cqw, 1.9rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.day-wide .value {
+  font-size: clamp(1.25rem, 9cqw, 2rem);
+}

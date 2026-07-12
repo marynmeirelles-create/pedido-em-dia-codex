@@ -1,5 +1,5 @@
-(function () {
-  const BACKUP_KIND = "atelie-em-dia-backup";
+﻿(function () {
+  const BACKUP_KIND = "pedido-em-dia-backup";
 
   function pad(value) {
     return String(value).padStart(2, "0");
@@ -7,7 +7,7 @@
 
   function filename() {
     const now = new Date();
-    return `AtelieEmDia_Backup_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.json`;
+    return `PedidoEmDia_Backup_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.json`;
   }
 
   async function exportBackup() {

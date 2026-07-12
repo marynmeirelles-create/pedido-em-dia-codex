@@ -1,23 +1,28 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FF7BAC">
-    <title>Ateliê em Dia</title>
-    <link rel="manifest" href="manifest.json?v=24">
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <title>Pedido em Dia</title>
+    <link rel="manifest" href="manifest.json?v=30">
+    <link rel="icon" href="assets/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Pedido em Dia">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=24">
+    <link rel="stylesheet" href="style.css?v=30">
+    <link rel="stylesheet" href="layout-fix.css?v=30">
   </head>
   <body>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <main id="auth" class="auth-shell">
       <section class="auth-card">
-        <img src="assets/atelie-em-dia-logo.png" alt="Ateliê em Dia" class="brand-logo">
+        <img src="assets/pedido-em-dia-logo.png" alt="Pedido em Dia" class="brand-logo">
         <p class="eyebrow">Produtividade com leveza</p>
         <h1 id="authTitle">Bem-vinda!</h1>
         <p id="authText">Vamos organizar seu ateliê?</p>
@@ -25,6 +30,11 @@
           <span>Organização</span>
           <span>Prazos</span>
           <span>Vendas</span>
+        </div>
+
+        <div id="installPanel" class="install-panel hidden">
+          <button id="installAppBtn" class="btn btn-secondary full" type="button">Salvar como aplicativo</button>
+          <p class="small-note">Adicione o Pedido em Dia à tela inicial do celular.</p>
         </div>
 
         <div id="welcomePanel" class="auth-panel">
@@ -45,6 +55,10 @@
           <label>Senha
             <input id="loginPassword" type="password" autocomplete="current-password" required>
           </label>
+          <label class="remember-option">
+            <input id="rememberPassword" type="checkbox">
+            <span>Lembrar minha senha neste aparelho</span>
+          </label>
           <button class="btn btn-primary full" type="submit">Entrar</button>
           <p class="small-note">Seus dados ficam salvos neste dispositivo. Faça backup regularmente.</p>
         </form>
@@ -54,7 +68,7 @@
     <div id="app" class="app-shell hidden">
       <header class="topbar">
         <div>
-          <img src="assets/atelie-em-dia-logo-transparent.png" alt="" class="top-logo">
+          <img src="assets/pedido-em-dia-logo-transparent.png" alt="" class="top-logo">
           <p id="screenKicker" class="eyebrow">Meu Dia</p>
           <h2 id="screenTitle">O que fazer hoje?</h2>
         </div>
@@ -92,8 +106,9 @@
     </div>
 
     <input id="restoreFile" type="file" accept="application/json,.json" class="hidden">
-    <script src="db.js?v=24"></script>
-    <script src="backup.js?v=24"></script>
-    <script src="script.js?v=24"></script>
+    <script src="db.js?v=30"></script>
+    <script src="backup.js?v=30"></script>
+    <script src="compat-fix.js?v=30"></script>
+    <script src="script.js?v=30"></script>
   </body>
 </html>

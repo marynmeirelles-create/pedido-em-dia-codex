@@ -1,4 +1,4 @@
-# Atelie em Dia
+﻿# Pedido em Dia
 
 Aplicativo offline para organizar pedidos, clientes, agenda e backups do atelie.
 

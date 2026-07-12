@@ -247,6 +247,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   gap: 5px;
   min-height: 112px;
   border-top: 5px solid var(--pink);
+  container-type: inline-size;
+  min-width: 0;
 }
 
 .day-square {
@@ -300,8 +302,16 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
 }
 
 .summary-card .value {
-  font-size: 1.9rem;
+  max-width: 100%;
+  font-size: clamp(1.05rem, 14cqw, 1.9rem);
   font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.day-wide .value {
+  font-size: clamp(1.25rem, 9cqw, 2rem);
 }
 
 .summary-card .label, .muted {
