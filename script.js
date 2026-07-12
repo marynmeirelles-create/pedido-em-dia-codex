@@ -1497,7 +1497,7 @@
   document.addEventListener("click", async (event) => {
     const target = event.target.closest("button");
     if (!target) return;
-    if (target.id === "installAppBtn" || target.id === "installReminderBtn") return installApp();
+    if (["installAppBtn", "installReminderBtn", "topInstallBtn"].includes(target.id)) return installApp();
     if (target.id === "dismissInstallReminderBtn") {
       installReminderDismissed = true;
       updateInstallPanel();
@@ -1709,5 +1709,6 @@
 
   checkAuth();
 })();
+
 
 

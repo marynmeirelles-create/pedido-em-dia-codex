@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FF7BAC">
     <title>Pedido em Dia</title>
-    <link rel="manifest" href="manifest.json?v=33">
+    <link rel="manifest" href="manifest.json?v=34">
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,8 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=33">
-    <link rel="stylesheet" href="layout-fix.css?v=33">
+    <link rel="stylesheet" href="style.css?v=34">
+    <link rel="stylesheet" href="layout-fix.css?v=34">
   </head>
   <body>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -33,7 +33,7 @@
         </div>
 
         <div id="installPanel" class="install-panel hidden">
-          <button id="installAppBtn" class="btn btn-secondary full" type="button">Salvar como aplicativo</button>
+          <button id="installAppBtn" class="btn btn-secondary full" type="button">Instalar aplicativo</button>
           <p class="small-note">Se o botão não abrir a instalação, toque no menu do navegador e escolha Instalar app ou Adicionar à tela inicial.</p>
         </div>
 
@@ -72,6 +72,7 @@
           <p id="screenKicker" class="eyebrow">Meu Dia</p>
           <h2 id="screenTitle">O que fazer hoje?</h2>
         </div>
+        <button id="topInstallBtn" class="top-install-btn hidden" type="button">Instalar</button>
         <button id="moreBtn" class="icon-btn" aria-label="Abrir menu">☰</button>
       </header>
 
@@ -81,7 +82,7 @@
           <strong>Quer usar como aplicativo?</strong>
           <p>Salve o Pedido em Dia na tela inicial do celular para abrir mais rápido.</p>
         </div>
-        <button id="installReminderBtn" class="btn btn-secondary" type="button">Salvar app</button>
+        <button id="installReminderBtn" class="btn btn-secondary" type="button">Instalar app</button>
         <button id="dismissInstallReminderBtn" class="icon-btn" aria-label="Fechar lembrete">×</button>
       </section>
       <section id="backupReminder" class="backup-reminder hidden">
@@ -115,12 +116,14 @@
     </div>
 
     <input id="restoreFile" type="file" accept="application/json,.json" class="hidden">
-    <script src="db.js?v=33"></script>
-    <script src="backup.js?v=33"></script>
-    <script src="compat-fix.js?v=33"></script>
-    <script src="script.js?v=33"></script>
+    <script src="db.js?v=34"></script>
+    <script src="backup.js?v=34"></script>
+    <script src="compat-fix.js?v=34"></script>
+    <script src="script.js?v=34"></script>
   </body>
 </html>
+
+
 
 
 

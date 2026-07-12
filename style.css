@@ -208,6 +208,18 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   backdrop-filter: blur(10px);
 }
 
+
+.top-install-btn {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  box-shadow: 0 10px 22px rgba(255, 123, 172, 0.28);
+  white-space: nowrap;
+}
 .icon-btn {
   width: 48px;
   height: 48px;
@@ -1069,4 +1081,5 @@ a.btn {
     page-break-inside: avoid;
   }
 }
+
 
