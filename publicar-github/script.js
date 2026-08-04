@@ -1301,6 +1301,62 @@
     `;
   }
 
+  function whatsappPhone(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("55")) return digits;
+    if (digits.length >= 10 && digits.length <= 11) return `55${digits}`;
+    return digits;
+  }
+
+  function orderShareText(order) {
+    const paymentLabels = { money: "Dinheiro", pix: "Pix", operator: "Operadoras de pagamento", shopee: "Shopee", mercado_livre: "Mercado Livre", other: "Outros" };
+    const deliveryLabels = { pickup: "Retirada", carrier: "Transportadora", post: "Correios", motoboy: "Motoboy" };
+    const items = (order.items || [])
+      .filter((item) => item.name || item.quantity || item.unitPrice)
+      .map((item) => `- ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * Number(item.unitPrice || 0))}`)
+      .join("\n") || "- Itens nao informados";
+    return [
+      "Pedido em Dia",
+      "",
+      `Cliente: ${order.client || "Nao informado"}`,
+      `Tema: ${order.theme || "Nao informado"}`,
+      `Crianca: ${order.child || "Nao informado"}${order.age ? ` - ${order.age} anos` : ""}`,
+      `Data da festa: ${formatDate(order.partyDate)}`,
+      `Entrega/agendamento: ${formatDate(order.deliveryDate)}`,
+      `Forma de entrega: ${optionLabel(order.deliveryMethod, deliveryLabels)}`,
+      `Frete: ${money(freightCharged(order))} (${order.freightPayer === "studio" ? "pago pelo atelie" : "pago pela cliente"})`,
+      "",
+      "Itens do pedido:",
+      items,
+      "",
+      `Subtotal: ${money(itemsSubtotal(order))}`,
+      `Desconto: ${money(discountAmount(order))}`,
+      `Total: ${money(orderTotal(order))}`,
+      `Sinal: ${money(Number(order.deposit || 0))}`,
+      `Saldo a receber: ${money(balance(order))}`,
+      `Forma de pagamento: ${optionLabel(order.paymentMethod, paymentLabels)}`,
+      order.notes ? `\nObservacoes: ${order.notes}` : ""
+    ].filter(Boolean).join("\n");
+  }
+
+  async function copyOrderDetails(order) {
+    const text = orderShareText(order);
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Detalhes do pedido copiados.");
+    } catch (error) {
+      prompt("Copie os detalhes do pedido:", text);
+    }
+  }
+
+  function sendOrderWhatsApp(order) {
+    const phone = whatsappPhone(order.phone);
+    const text = encodeURIComponent(orderShareText(order));
+    const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(url, "_blank", "noopener");
+  }
+
   function renderDetail(order) {
     if (!order) return setScreen("orders");
     const [label, cls] = status(order);
@@ -1329,6 +1385,8 @@
         <p class="muted" style="margin-top: 14px;">${order.notes || "Sem observações."}</p>
         <div class="actions">
           <button class="btn btn-primary" data-edit-order="${order.id}">Editar</button>
+          <button class="btn btn-success" data-whatsapp-order="${order.id}">Enviar WhatsApp</button>
+          <button class="btn btn-secondary" data-copy-order="${order.id}">Copiar detalhes</button>
           <button class="btn btn-success" data-complete-order="${order.id}">Concluir</button>
           <button class="btn btn-secondary" data-generate-checklist-pdf="${order.id}">Gerar PDF</button>
           <button class="btn btn-secondary" data-print-checklist="${order.id}">Imprimir</button>
@@ -1539,6 +1597,16 @@
     if (target.dataset.editOrder) {
       renderForm(state.orders.find((item) => item.id === target.dataset.editOrder));
       return setScreen("form");
+    }
+    if (target.dataset.copyOrder) {
+      const order = state.orders.find((item) => item.id === target.dataset.copyOrder);
+      if (!order) return showToast("Pedido não encontrado.");
+      return copyOrderDetails(order);
+    }
+    if (target.dataset.whatsappOrder) {
+      const order = state.orders.find((item) => item.id === target.dataset.whatsappOrder);
+      if (!order) return showToast("Pedido não encontrado.");
+      return sendOrderWhatsApp(order);
     }
     if (target.dataset.completeOrder) {
       const order = state.orders.find((item) => item.id === target.dataset.completeOrder);
