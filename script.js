@@ -1314,29 +1314,27 @@
     const deliveryLabels = { pickup: "Retirada", carrier: "Transportadora", post: "Correios", motoboy: "Motoboy" };
     const items = (order.items || [])
       .filter((item) => item.name || item.quantity || item.unitPrice)
-      .map((item) => `- ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * Number(item.unitPrice || 0))}`)
-      .join("\n") || "- Itens nao informados";
+      .map((item) => `• ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * Number(item.unitPrice || 0))}`)
+      .join("\n") || "• Itens não informados";
+    const personalization = [order.child || "Não informado", order.age ? `${order.age} anos` : ""].filter(Boolean).join(" - ");
     return [
-      "Pedido em Dia",
+      "*DETALHES DO PEDIDO*",
       "",
-      `Cliente: ${order.client || "Nao informado"}`,
-      `Tema: ${order.theme || "Nao informado"}`,
-      `Crianca: ${order.child || "Nao informado"}${order.age ? ` - ${order.age} anos` : ""}`,
-      `Data da festa: ${formatDate(order.partyDate)}`,
-      `Entrega/agendamento: ${formatDate(order.deliveryDate)}`,
-      `Forma de entrega: ${optionLabel(order.deliveryMethod, deliveryLabels)}`,
-      `Frete: ${money(freightCharged(order))} (${order.freightPayer === "studio" ? "pago pelo atelie" : "pago pela cliente"})`,
+      `👤 *Cliente:* ${order.client || "Não informado"}`,
+      `🎨 *Tema:* ${order.theme || "Não informado"}`,
+      `🏷️ *Nome e idade para personalizar:* ${personalization}`,
+      `📅 *Data da festa:* ${formatDate(order.partyDate)}`,
+      `📦 *Data do envio/retirada:* ${formatDate(order.deliveryDate)}`,
+      `🚚 *Forma de entrega:* ${optionLabel(order.deliveryMethod, deliveryLabels)}`,
       "",
-      "Itens do pedido:",
+      "🛍️ *Itens do pedido:*",
       items,
       "",
-      `Subtotal: ${money(itemsSubtotal(order))}`,
-      `Desconto: ${money(discountAmount(order))}`,
-      `Total: ${money(orderTotal(order))}`,
-      `Sinal: ${money(Number(order.deposit || 0))}`,
-      `Saldo a receber: ${money(balance(order))}`,
-      `Forma de pagamento: ${optionLabel(order.paymentMethod, paymentLabels)}`,
-      order.notes ? `\nObservacoes: ${order.notes}` : ""
+      `💰 *Valor do pedido:* ${money(orderTotal(order))}`,
+      `💳 *Forma de pagamento:* ${optionLabel(order.paymentMethod, paymentLabels)}`,
+      `🔐 *Sinal:* ${money(Number(order.deposit || 0))}`,
+      `🧾 *Saldo a receber:* ${money(balance(order))}`,
+      `📝 *Observações:* ${order.notes || "Sem observações."}`
     ].filter(Boolean).join("\n");
   }
 
