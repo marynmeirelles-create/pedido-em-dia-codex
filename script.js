@@ -205,9 +205,13 @@
     return Math.max(0, orderTotal(order) - paidAmount(order));
   }
 
+  function isFinalizedOrder(order) {
+    return Boolean(order.done) || order.productionPhase === "finished";
+  }
+
   function status(order) {
     if (order.deletedAt) return ["Lixeira", "pending"];
-    if (order.done) return ["Concluído", "done"];
+    if (isFinalizedOrder(order)) return ["Concluído", "done"];
     if (daysUntil(order.deliveryDate) <= 3) return ["Urgente", "urgent"];
     if (balance(order) > 0) return ["Pagamento pendente", "pending"];
     return ["Em produção", "production"];
@@ -363,10 +367,10 @@
   function todayTasks() {
     const orders = activeOrders();
     return {
-      produzir: orders.filter((o) => !o.done && daysUntil(o.deliveryDate) <= 3),
-      entregar: orders.filter((o) => o.deliveryDate === todayISO()),
+      produzir: orders.filter((o) => !isFinalizedOrder(o) && daysUntil(o.deliveryDate) <= 3),
+      entregar: orders.filter((o) => !isFinalizedOrder(o) && o.deliveryDate === todayISO()),
       receber: orders.filter((o) => balance(o) > 0),
-      atencao: orders.filter((o) => !o.done && daysUntil(o.deliveryDate) < 0)
+      atencao: orders.filter((o) => !isFinalizedOrder(o) && daysUntil(o.deliveryDate) < 0)
     };
   }
 
@@ -430,7 +434,7 @@
     const tasks = todayTasks();
     const orders = activeOrders();
     const monthKey = todayISO().slice(0, 7);
-    const openOrders = orders.filter((order) => !order.done);
+    const openOrders = orders.filter((order) => !isFinalizedOrder(order));
     const pendingPaymentOrders = orders.filter((order) => balance(order) > 0);
     const receivedThisMonth = orders
       .filter((order) => paidAmount(order) > 0 && paymentMonthKey(order) === monthKey)
@@ -438,10 +442,7 @@
     const soldThisMonth = orders
       .filter((order) => saleMonthKey(order) === monthKey)
       .reduce((sum, order) => sum + orderTotal(order), 0);
-    const listedOrders = orders.slice().sort((a, b) => {
-      if (a.done !== b.done) return Number(a.done) - Number(b.done);
-      return (a.deliveryDate || "").localeCompare(b.deliveryDate || "");
-    });
+    const listedOrders = orders.filter((order) => !isFinalizedOrder(order)).sort((a, b) => (a.deliveryDate || "").localeCompare(b.deliveryDate || ""));
     $("#dayView").innerHTML = `
       <h3 class="day-heading">Resumo do ateliê</h3>
       <div class="grid day-summary">
@@ -1709,6 +1710,7 @@
 
   checkAuth();
 })();
+
 
 
 
