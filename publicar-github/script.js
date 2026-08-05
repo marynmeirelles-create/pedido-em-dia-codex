@@ -1312,13 +1312,16 @@
   function orderShareText(order) {
     const paymentLabels = { money: "Dinheiro", pix: "Pix", operator: "Operadoras de pagamento", shopee: "Shopee", mercado_livre: "Mercado Livre", other: "Outros" };
     const deliveryLabels = { pickup: "Retirada", carrier: "Transportadora", post: "Correios", motoboy: "Motoboy" };
+    const looksLikePhone = (value) => String(value || "").replace(/\D/g, "").length >= 8;
+    const cleanChild = looksLikePhone(order.child) ? "" : String(order.child || "").trim();
     const cleanAge = String(order.age || "").trim();
-    const ageLooksLikePhone = cleanAge.replace(/\D/g, "").length >= 8;
+    const ageLooksLikePhone = looksLikePhone(cleanAge);
+    const ageText = cleanAge && !ageLooksLikePhone ? (/\bano/i.test(cleanAge) ? cleanAge : `${cleanAge} anos`) : "";
     const items = (order.items || [])
       .filter((item) => item.name || item.quantity || item.unitPrice)
       .map((item) => `• ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * Number(item.unitPrice || 0))}`)
       .join("\n") || "• Itens não informados";
-    const personalization = [order.child || "Não informado", cleanAge && !ageLooksLikePhone ? `${cleanAge} anos` : ""].filter(Boolean).join(" - ");
+    const personalization = [cleanChild, ageText].filter(Boolean).join(" - ") || "Não informado";
     return [
       "*DETALHES DO PEDIDO*",
       "",
