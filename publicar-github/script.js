@@ -1312,11 +1312,13 @@
   function orderShareText(order) {
     const paymentLabels = { money: "Dinheiro", pix: "Pix", operator: "Operadoras de pagamento", shopee: "Shopee", mercado_livre: "Mercado Livre", other: "Outros" };
     const deliveryLabels = { pickup: "Retirada", carrier: "Transportadora", post: "Correios", motoboy: "Motoboy" };
+    const cleanAge = String(order.age || "").trim();
+    const ageLooksLikePhone = cleanAge.replace(/\D/g, "").length >= 8;
     const items = (order.items || [])
       .filter((item) => item.name || item.quantity || item.unitPrice)
       .map((item) => `• ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * Number(item.unitPrice || 0))}`)
       .join("\n") || "• Itens não informados";
-    const personalization = [order.child || "Não informado", order.age ? `${order.age} anos` : ""].filter(Boolean).join(" - ");
+    const personalization = [order.child || "Não informado", cleanAge && !ageLooksLikePhone ? `${cleanAge} anos` : ""].filter(Boolean).join(" - ");
     return [
       "*DETALHES DO PEDIDO*",
       "",
@@ -1464,7 +1466,7 @@
       client: formData.get("client").trim(),
       phone: formData.get("phone").trim(),
       child: formData.get("child").trim(),
-      age: formData.get("age").trim(),
+      age: formData.get("age").trim().replace(/\D/g, "").length >= 8 ? "" : formData.get("age").trim(),
       theme: formData.get("theme").trim(),
       partyDate: formData.get("partyDate"),
       deliveryDate: formData.get("deliveryDate"),
