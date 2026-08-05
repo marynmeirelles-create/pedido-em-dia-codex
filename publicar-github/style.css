@@ -234,6 +234,17 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
 .grid { display: grid; gap: 16px; }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.detail-grid > div {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+}
+
+.detail-grid strong {
+  display: block;
+  line-height: 1.35;
+}
 .day-heading {
   color: #7a346b;
   font-size: 1.55rem;

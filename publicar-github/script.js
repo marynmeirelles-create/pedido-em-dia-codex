@@ -1372,7 +1372,7 @@
           <div><h3>${order.client}</h3><p class="muted">${order.theme || "Sem tema"} · entrega ${formatDate(order.deliveryDate)}</p></div>
           <span class="chip ${cls}">${label}</span>
         </div>
-        <div class="grid two">
+        <div class="grid two detail-grid">
           <div><span class="muted">Subtotal</span><strong>${money(itemsSubtotal(order))}</strong></div>
           <div><span class="muted">Desconto</span><strong>${money(discountAmount(order))}</strong></div>
           <div><span class="muted">Frete cobrado</span><strong>${money(freightCharged(order))}</strong></div>
