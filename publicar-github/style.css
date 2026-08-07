@@ -252,6 +252,14 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   margin-top: 16px;
 }
 
+.finance-filter {
+  margin-bottom: 16px;
+}
+
+.finance-filter label {
+  margin: 0;
+}
+
 .finance-card {
   display: grid;
   gap: 14px;

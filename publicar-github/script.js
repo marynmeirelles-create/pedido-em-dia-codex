@@ -1,7 +1,7 @@
 ﻿(function () {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-  const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear() };
+  const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7) };
   let deferredInstallPrompt = null;
   let installReminderDismissed = false;
 
@@ -676,19 +676,45 @@
     `;
   }
 
+  function financeMonthOptions() {
+    const options = new Set();
+    const now = new Date();
+    for (let index = 0; index < 18; index++) {
+      options.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+      now.setMonth(now.getMonth() - 1);
+    }
+    for (const order of activeOrders()) {
+      if (paidAmount(order) > 0) options.add(paymentMonthKey(order));
+    }
+    return Array.from(options).filter(Boolean).sort((a, b) => b.localeCompare(a));
+  }
+
+  function monthLabel(key) {
+    const [year, month] = String(key || todayISO().slice(0, 7)).split("-").map(Number);
+    return new Date(year, month - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }
+
   function renderFinance() {
     const pendingOrders = activeOrders()
       .filter((order) => balance(order) > 0)
       .sort((a, b) => (a.deliveryDate || "").localeCompare(b.deliveryDate || ""));
     const pendingTotal = pendingOrders.reduce((sum, order) => sum + balance(order), 0);
-    const monthKey = todayISO().slice(0, 7);
+    const monthKey = state.financeMonth || todayISO().slice(0, 7);
+    const options = financeMonthOptions();
     const receivedTotal = activeOrders()
       .filter((order) => paidAmount(order) > 0 && paymentMonthKey(order) === monthKey)
       .reduce((sum, order) => sum + paidAmount(order), 0);
     $("#financeView").innerHTML = `
+      <div class="card finance-filter">
+        <label>Consultar recebidos de
+          <select id="financeMonth">
+            ${options.map((option) => `<option value="${option}" ${option === monthKey ? "selected" : ""}>${monthLabel(option)}</option>`).join("")}
+          </select>
+        </label>
+      </div>
       <div class="grid two">
         <div class="card summary-card"><span class="label">A receber</span><span class="value">${money(pendingTotal)}</span><span class="muted">${pendingOrders.length} pedido(s) com saldo</span></div>
-        <div class="card summary-card"><span class="label">Recebido no mês</span><span class="value">${money(receivedTotal)}</span><span class="muted">baixas do mês atual</span></div>
+        <div class="card summary-card"><span class="label">Recebido no mês</span><span class="value">${money(receivedTotal)}</span><span class="muted">${monthLabel(monthKey)}</span></div>
       </div>
       <div class="finance-list">
         ${pendingOrders.length ? pendingOrders.map((order) => `
@@ -1813,6 +1839,11 @@
       addHistory(order, `Fase alterada para ${phaseLabels[event.target.value]}.`);
       await saveOrder(order, "Alterar fase do pedido");
       showToast("Fase do pedido atualizada.");
+      return;
+    }
+    if (event.target.id === "financeMonth") {
+      state.financeMonth = event.target.value;
+      renderFinance();
       return;
     }
     if (!event.target.closest("#orderForm")) return;
