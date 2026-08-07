@@ -681,11 +681,14 @@
       .filter((order) => balance(order) > 0)
       .sort((a, b) => (a.deliveryDate || "").localeCompare(b.deliveryDate || ""));
     const pendingTotal = pendingOrders.reduce((sum, order) => sum + balance(order), 0);
-    const receivedTotal = activeOrders().reduce((sum, order) => sum + paidAmount(order), 0);
+    const monthKey = todayISO().slice(0, 7);
+    const receivedTotal = activeOrders()
+      .filter((order) => paidAmount(order) > 0 && paymentMonthKey(order) === monthKey)
+      .reduce((sum, order) => sum + paidAmount(order), 0);
     $("#financeView").innerHTML = `
       <div class="grid two">
         <div class="card summary-card"><span class="label">A receber</span><span class="value">${money(pendingTotal)}</span><span class="muted">${pendingOrders.length} pedido(s) com saldo</span></div>
-        <div class="card summary-card"><span class="label">Recebido</span><span class="value">${money(receivedTotal)}</span><span class="muted">valores já baixados</span></div>
+        <div class="card summary-card"><span class="label">Recebido no mês</span><span class="value">${money(receivedTotal)}</span><span class="muted">baixas do mês atual</span></div>
       </div>
       <div class="finance-list">
         ${pendingOrders.length ? pendingOrders.map((order) => `

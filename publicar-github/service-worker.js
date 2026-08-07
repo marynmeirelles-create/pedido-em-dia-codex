@@ -1,14 +1,14 @@
-﻿const CACHE_NAME = "pedido-em-dia-v43";
+﻿const CACHE_NAME = "pedido-em-dia-v44";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=43",
-  "./layout-fix.css?v=43",
-  "./script.js?v=43",
-  "./compat-fix.js?v=43",
-  "./db.js?v=43",
-  "./backup.js?v=43",
-  "./manifest.json?v=43",
+  "./style.css?v=44",
+  "./layout-fix.css?v=44",
+  "./script.js?v=44",
+  "./compat-fix.js?v=44",
+  "./db.js?v=44",
+  "./backup.js?v=44",
+  "./manifest.json?v=44",
   "./assets/pedido-em-dia-logo.png",
   "./assets/pedido-em-dia-logo-transparent.png",
   "./assets/icon-192.png",
@@ -40,6 +40,7 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then((cached) => cached || fetch(event.request).catch(() => caches.match("./index.html")))
   );
 });
+
 
 
 
