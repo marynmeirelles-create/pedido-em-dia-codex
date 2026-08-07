@@ -13,7 +13,7 @@
     production: ["Produção", "O que precisa ser fabricado?"],
     finance: ["Financeiro", "Pagamentos pendentes"],
     dashboard: ["Dashboard", "Como está seu ateliê?"],
-    more: ["Backup", "Proteja sua agenda"],
+    more: ["Meus dados", "Dados do ateliê e backup"],
     form: ["Novo Pedido", "Vamos cadastrar uma encomenda"],
     detail: ["Pedido", "Detalhes da encomenda"]
   };
@@ -917,14 +917,51 @@
   async function renderMore() {
     const frequency = await AtelieDB.getSetting("backupFrequency", "7");
     const lastBackupAt = await AtelieDB.getSetting("lastBackupAt");
+    const studioName = await AtelieDB.getSetting("studioName", "");
+    const ownerName = await AtelieDB.getSetting("ownerName", "");
+    const studioWhatsapp = await AtelieDB.getSetting("studioWhatsapp", "");
+    const studioLogo = await AtelieDB.getSetting("studioLogo", "");
+    const pixType = await AtelieDB.getSetting("pixType", "CPF");
+    const pixKey = await AtelieDB.getSetting("pixKey", "");
+    const pixName = await AtelieDB.getSetting("pixName", "");
     const snapshots = (await AtelieDB.getAll("snapshots")).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
     const daysSinceBackup = lastBackupAt ? Math.floor((Date.now() - new Date(lastBackupAt).getTime()) / 86400000) : null;
     const isOutdated = !lastBackupAt || (Number(frequency) && daysSinceBackup >= Number(frequency));
     const backupStatus = isOutdated ? "⚠ Backup desatualizado" : "✔ Backup atualizado";
     const backupStatusClass = isOutdated ? "backup-status warning" : "backup-status ok";
     $("#moreView").innerHTML = `
+      <div class="card profile-card">
+        <h3>🎀 Dados do seu ateliê</h3>
+        <form id="atelierDataForm" class="settings-form">
+          <label>Nome do ateliê<input name="studioName" value="${escapeHtml(studioName)}" placeholder="Nome do seu ateliê"></label>
+          <label>Seu nome<input name="ownerName" value="${escapeHtml(ownerName)}" placeholder="Seu nome"></label>
+          <label>WhatsApp (com DDD)<input name="studioWhatsapp" value="${escapeHtml(studioWhatsapp)}" inputmode="tel" placeholder="31 98808-9478"></label>
+          <label>Logomarca do ateliê<input id="studioLogoFile" type="file" accept="image/*"></label>
+          ${studioLogo ? `
+            <div class="logo-preview-row">
+              <img class="studio-logo-preview" src="${studioLogo}" alt="Logomarca salva">
+              <span class="muted">Logomarca salva para os próximos documentos.</span>
+            </div>
+          ` : `<p class="small-note">A logomarca ficará salva neste aparelho e poderá aparecer nos documentos gerados.</p>`}
+          <h3>💸 Dados para Pix</h3>
+          <div class="form-grid">
+            <label>Tipo de chave Pix
+              <select name="pixType">
+                ${["CPF", "CNPJ", "Celular", "E-mail", "Chave aleatória"].map((type) => `<option value="${type}" ${pixType === type ? "selected" : ""}>${type}</option>`).join("")}
+              </select>
+            </label>
+            <label>Chave Pix<input name="pixKey" value="${escapeHtml(pixKey)}" placeholder="Digite sua chave Pix"></label>
+            <label class="span-2">Nome no Pix<input name="pixName" value="${escapeHtml(pixName)}" placeholder="Nome que aparece no Pix"></label>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" data-copy-pix>Copiar Pix</button>
+            <button type="button" class="btn btn-soft" data-send-pix-whatsapp>Enviar Pix no WhatsApp</button>
+          </div>
+          <button class="btn btn-primary full" type="submit">💾 Salvar meus dados</button>
+        </form>
+      </div>
       <div class="card backup-alert">
-        <h3>Aviso importante sobre backup</h3>
+        <h3>Backup dos dados</h3>
         <p>Para manter sua agenda segura, faça backup regularmente, principalmente antes de trocar de celular, limpar o navegador ou formatar o computador.</p>
         <p><strong>⚠ Se o navegador for apagado ou o aparelho for formatado sem existir um backup, os dados não poderão ser recuperados.</strong></p>
       </div>
@@ -976,7 +1013,7 @@
           <ol class="steps">
             <li>Instale novamente o Pedido em Dia.</li>
             <li>Abra o aplicativo.</li>
-            <li>Acesse Backup.</li>
+            <li>Acesse Meus dados.</li>
             <li>Clique em Restaurar Backup.</li>
             <li>Escolha o arquivo salvo anteriormente.</li>
             <li>Todos os pedidos voltarão automaticamente.</li>
@@ -1006,6 +1043,35 @@
             </div>
           `).join("") : `<p class="muted">Nenhuma versão local salva ainda. Ela será criada ao salvar pedidos, apagar dados ou fazer backup.</p>`}
         </div>
+        <div class="actions">
+          <button class="btn btn-secondary" data-mark-backup-done>Marcar como feito</button>
+          <button class="btn btn-soft" data-clear-snapshots>Limpar histórico local</button>
+        </div>
+      </div>
+      <div class="card profile-card">
+        <h3>🔐 Alterar senha</h3>
+        <p class="small-note password-note">Se esquecer a senha, use a opção Redefinir senha na tela de entrada. Ela funciona apenas neste aparelho.</p>
+        <form id="changePasswordForm" class="settings-form">
+          <label>Senha atual
+            <div class="password-field">
+              <input id="currentPasswordChange" name="currentPassword" type="password" placeholder="Digite sua senha atual" autocomplete="current-password">
+              <button type="button" class="btn btn-soft" data-toggle-password="currentPasswordChange">Mostrar</button>
+            </div>
+          </label>
+          <label>Nova senha
+            <div class="password-field">
+              <input id="newPasswordChange" name="newPassword" type="password" minlength="3" placeholder="Mínimo 3 caracteres" autocomplete="new-password">
+              <button type="button" class="btn btn-soft" data-toggle-password="newPasswordChange">Mostrar</button>
+            </div>
+          </label>
+          <label>Confirmar nova senha
+            <div class="password-field">
+              <input id="confirmPasswordChange" name="confirmPassword" type="password" minlength="3" placeholder="Repita a nova senha" autocomplete="new-password">
+              <button type="button" class="btn btn-soft" data-toggle-password="confirmPasswordChange">Mostrar</button>
+            </div>
+          </label>
+          <button class="btn btn-primary full" type="submit">🔒 Salvar nova senha</button>
+        </form>
       </div>
     `;
     $("#backupFrequency").value = frequency;
@@ -1430,6 +1496,28 @@
     window.open(url, "_blank", "noopener");
   }
 
+  async function copyText(text, successMessage) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(successMessage);
+    } catch (error) {
+      prompt("Copie o texto:", text);
+    }
+  }
+
+  async function pixShareText() {
+    const pixType = await AtelieDB.getSetting("pixType", "CPF");
+    const pixKey = await AtelieDB.getSetting("pixKey", "");
+    const pixName = await AtelieDB.getSetting("pixName", "");
+    return [
+      "*DADOS PARA PIX*",
+      "",
+      `🔑 *Tipo de chave:* ${pixType || "Não informado"}`,
+      `📋 *Chave Pix:* ${pixKey || "Não informada"}`,
+      `👤 *Nome no Pix:* ${pixName || "Não informado"}`
+    ].join("\n");
+  }
+
   function renderDetail(order) {
     if (!order) return setScreen("orders");
     const [label, cls] = status(order);
@@ -1735,6 +1823,36 @@
     if (target.dataset.backup !== undefined || target.id === "reminderBackupBtn") return doBackup();
     if (target.dataset.restore !== undefined) return $("#restoreFile").click();
     if (target.dataset.restoreSnapshot) return restoreLocalSnapshot(target.dataset.restoreSnapshot);
+    if (target.dataset.markBackupDone !== undefined) {
+      await AtelieDB.setSetting("lastBackupAt", new Date().toISOString());
+      showToast("Backup marcado como feito.");
+      return renderMore();
+    }
+    if (target.dataset.clearSnapshots !== undefined) {
+      const ok = confirm("Limpar o histórico local de backups deste aparelho?");
+      if (!ok) return;
+      await AtelieDB.clear("snapshots");
+      showToast("Histórico local limpo.");
+      return renderMore();
+    }
+    if (target.dataset.copyPix !== undefined) {
+      const pixKey = await AtelieDB.getSetting("pixKey", "");
+      if (!pixKey) return showToast("Cadastre sua chave Pix primeiro.");
+      return copyText(pixKey, "Chave Pix copiada.");
+    }
+    if (target.dataset.sendPixWhatsapp !== undefined) {
+      const text = encodeURIComponent(await pixShareText());
+      window.open(`https://wa.me/?text=${text}`, "_blank", "noopener");
+      return;
+    }
+    if (target.dataset.togglePassword) {
+      const input = document.getElementById(target.dataset.togglePassword);
+      if (!input) return;
+      const visible = input.type === "text";
+      input.type = visible ? "password" : "text";
+      target.textContent = visible ? "Mostrar" : "Ocultar";
+      return;
+    }
     if (target.id === "dismissReminderBtn") return $("#backupReminder").classList.add("hidden");
     if (target.dataset.forgotPassword !== undefined) {
       const ok = confirm("Redefinir a senha neste aparelho? Seus pedidos e clientes serão mantidos. Por segurança, faça backup regularmente.");
@@ -1789,6 +1907,32 @@
   });
 
   document.addEventListener("submit", async (event) => {
+    if (event.target.id === "atelierDataForm") {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      await AtelieDB.setSetting("studioName", formData.get("studioName").trim());
+      await AtelieDB.setSetting("ownerName", formData.get("ownerName").trim());
+      await AtelieDB.setSetting("studioWhatsapp", formData.get("studioWhatsapp").trim());
+      await AtelieDB.setSetting("pixType", formData.get("pixType"));
+      await AtelieDB.setSetting("pixKey", formData.get("pixKey").trim());
+      await AtelieDB.setSetting("pixName", formData.get("pixName").trim());
+      return showToast("Meus dados foram salvos.");
+    }
+    if (event.target.id === "changePasswordForm") {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const current = formData.get("currentPassword");
+      const next = formData.get("newPassword");
+      const confirmation = formData.get("confirmPassword");
+      const stored = await AtelieDB.getSetting("passwordHash");
+      if (!current || await hash(current) !== stored) return showToast("Senha atual incorreta.");
+      if (!next || next.length < 3) return showToast("A nova senha precisa ter pelo menos 3 caracteres.");
+      if (next !== confirmation) return showToast("As senhas precisam ser iguais.");
+      await AtelieDB.setSetting("passwordHash", await hash(next));
+      setRememberedPassword("");
+      event.target.reset();
+      return showToast("Senha alterada com sucesso.");
+    }
     if (event.target.id === "clientForm") {
       event.preventDefault();
       const formData = new FormData(event.target);
@@ -1844,6 +1988,20 @@
   });
 
   document.addEventListener("change", async (event) => {
+    if (event.target.id === "studioLogoFile") {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) return showToast("Escolha um arquivo de imagem.");
+      const reader = new FileReader();
+      reader.onload = async () => {
+        await AtelieDB.setSetting("studioLogo", reader.result);
+        showToast("Logomarca salva.");
+        renderMore();
+      };
+      reader.onerror = () => showToast("Não foi possível salvar a logomarca.");
+      reader.readAsDataURL(file);
+      return;
+    }
     if (event.target.dataset.phaseOrder) {
       const order = state.orders.find((item) => item.id === event.target.dataset.phaseOrder);
       if (!order) return;

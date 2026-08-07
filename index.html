@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FF7BAC">
     <title>Pedido em Dia</title>
-    <link rel="manifest" href="manifest.json?v=46">
+    <link rel="manifest" href="manifest.json?v=47">
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,8 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=46">
-    <link rel="stylesheet" href="layout-fix.css?v=46">
+    <link rel="stylesheet" href="style.css?v=47">
+    <link rel="stylesheet" href="layout-fix.css?v=47">
   </head>
   <body>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -74,7 +74,7 @@
           <h2 id="screenTitle">O que fazer hoje?</h2>
         </div>
         <button id="topInstallBtn" class="top-install-btn hidden" type="button">Instalar</button>
-        <button id="moreBtn" class="icon-btn" aria-label="Abrir menu">☰</button>
+        <button id="moreBtn" class="header-data-btn" aria-label="Abrir meus dados">Meus dados</button>
       </header>
 
 
@@ -107,23 +107,24 @@
       <section id="orderDetailView" class="screen hidden"></section>
 
       <nav class="bottom-nav" aria-label="Menu principal">
-        <button data-view="day" class="nav-item active"><span>☀</span>Meu Dia</button>
-        <button data-view="orders" class="nav-item"><span>📋</span>Pedidos</button>
-        <button data-view="agenda" class="nav-item"><span>📅</span>Agenda</button>
-        <button data-view="clients" class="nav-item"><span>👤</span>Clientes</button>
-        <button data-view="finance" class="nav-item"><span>💳</span>Financeiro</button>
+        <button data-view="day" class="nav-item active"><span>&#9728;</span>Meu Dia</button>
+        <button data-view="orders" class="nav-item"><span>&#128203;</span>Pedidos</button>
+        <button data-view="agenda" class="nav-item"><span>&#128197;</span>Agenda</button>
+        <button data-view="clients" class="nav-item"><span>&#128100;</span>Clientes</button>
+        <button data-view="finance" class="nav-item"><span>&#128179;</span>Financeiro</button>
       </nav>
 
       <button id="fabNewOrder" class="fab" aria-label="Novo pedido">+</button>
     </div>
 
     <input id="restoreFile" type="file" accept="application/json,.json" class="hidden">
-    <script src="db.js?v=46"></script>
-    <script src="backup.js?v=46"></script>
-    <script src="compat-fix.js?v=46"></script>
-    <script src="script.js?v=46"></script>
+    <script src="db.js?v=47"></script>
+    <script src="backup.js?v=47"></script>
+    <script src="compat-fix.js?v=47"></script>
+    <script src="script.js?v=47"></script>
   </body>
 </html>
+
 
 
 
