@@ -358,6 +358,11 @@
     $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     $("#fabNewOrder").classList.toggle("hidden", view === "form");
     render();
+    if (view === "detail") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      $("#app").scrollTop = 0;
+      $("#orderDetailView").scrollIntoView({ block: "start" });
+    }
   }
 
   function activeOrders() {
