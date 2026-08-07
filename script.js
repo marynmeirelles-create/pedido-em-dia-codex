@@ -1736,6 +1736,19 @@
     if (target.dataset.restore !== undefined) return $("#restoreFile").click();
     if (target.dataset.restoreSnapshot) return restoreLocalSnapshot(target.dataset.restoreSnapshot);
     if (target.id === "dismissReminderBtn") return $("#backupReminder").classList.add("hidden");
+    if (target.dataset.forgotPassword !== undefined) {
+      const ok = confirm("Redefinir a senha neste aparelho? Seus pedidos e clientes serão mantidos. Por segurança, faça backup regularmente.");
+      if (!ok) return;
+      const next = prompt("Digite a nova senha:");
+      if (!next) return;
+      const confirmNext = prompt("Confirme a nova senha:");
+      if (next !== confirmNext) return showToast("As senhas precisam ser iguais.");
+      await AtelieDB.setSetting("passwordHash", await hash(next));
+      setRememberedPassword("");
+      $("#loginPassword").value = "";
+      $("#rememberPassword").checked = false;
+      return showToast("Senha redefinida com sucesso.");
+    }
     if (target.dataset.changePassword !== undefined) {
       const current = prompt("Digite sua senha atual:");
       const stored = await AtelieDB.getSetting("passwordHash");

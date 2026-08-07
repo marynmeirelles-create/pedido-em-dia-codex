@@ -141,6 +141,16 @@ h3 { font-size: 1rem; margin-bottom: 10px; }
   accent-color: var(--pink);
 }
 
+.text-button {
+  border: 0;
+  background: transparent;
+  color: var(--purple);
+  font: inherit;
+  font-weight: 700;
+  padding: 4px 0;
+  text-align: center;
+}
+
 label {
   display: grid;
   gap: 7px;
