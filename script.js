@@ -11,6 +11,7 @@
     agenda: ["Agenda", "Quando cada pedido vence?"],
     orders: ["Pedidos", "Como está cada encomenda?"],
     production: ["Produção", "O que precisa ser fabricado?"],
+    finance: ["Financeiro", "Pagamentos pendentes"],
     dashboard: ["Dashboard", "Como está seu ateliê?"],
     more: ["Backup", "Proteja sua agenda"],
     form: ["Novo Pedido", "Vamos cadastrar uma encomenda"],
@@ -346,6 +347,7 @@
       agenda: "#agendaView",
       orders: "#ordersView",
       production: "#productionView",
+      finance: "#financeView",
       dashboard: "#dashboardView",
       more: "#moreView",
       form: "#orderFormView",
@@ -670,6 +672,40 @@
         <div class="card summary-card"><span class="label">Ticket médio</span><span class="value">${money(orders.length ? total / orders.length : 0)}</span><span class="muted">por pedido</span></div>
         <div class="card summary-card"><span class="label">Concluídos</span><span class="value">${done}</span><span class="muted">entregas finalizadas</span></div>
         <div class="card summary-card"><span class="label">Urgentes</span><span class="value">${orders.filter((o) => !o.done && daysUntil(o.deliveryDate) <= 3).length}</span><span class="muted">até 3 dias</span></div>
+      </div>
+    `;
+  }
+
+  function renderFinance() {
+    const pendingOrders = activeOrders()
+      .filter((order) => balance(order) > 0)
+      .sort((a, b) => (a.deliveryDate || "").localeCompare(b.deliveryDate || ""));
+    const pendingTotal = pendingOrders.reduce((sum, order) => sum + balance(order), 0);
+    const receivedTotal = activeOrders().reduce((sum, order) => sum + paidAmount(order), 0);
+    $("#financeView").innerHTML = `
+      <div class="grid two">
+        <div class="card summary-card"><span class="label">A receber</span><span class="value">${money(pendingTotal)}</span><span class="muted">${pendingOrders.length} pedido(s) com saldo</span></div>
+        <div class="card summary-card"><span class="label">Recebido</span><span class="value">${money(receivedTotal)}</span><span class="muted">valores já baixados</span></div>
+      </div>
+      <div class="finance-list">
+        ${pendingOrders.length ? pendingOrders.map((order) => `
+          <div class="card finance-card">
+            <button class="link-panel" data-open-order="${order.id}">
+              <h3>${order.client || "Cliente sem nome"}</h3>
+              <p class="muted">${order.theme || "Sem tema"} · entrega ${formatDate(order.deliveryDate)}</p>
+            </button>
+            <div class="finance-values">
+              <span><strong>Total</strong>${money(orderTotal(order))}</span>
+              <span><strong>Sinal</strong>${money(Number(order.deposit || 0))}</span>
+              <span><strong>A receber</strong>${money(balance(order))}</span>
+            </div>
+            <div class="actions">
+              <button class="btn btn-success" data-pay-order="${order.id}">Dar baixa</button>
+              <button class="btn btn-secondary" data-open-order="${order.id}">Abrir pedido</button>
+              <button class="btn btn-secondary" data-whatsapp-order="${order.id}">Enviar WhatsApp</button>
+            </div>
+          </div>
+        `).join("") : emptyCard("Nenhum valor pendente", "Todos os pagamentos cadastrados estão em dia.")}
       </div>
     `;
   }
@@ -1450,6 +1486,7 @@
     if (state.currentView === "agenda") renderAgenda();
     if (state.currentView === "orders") renderOrders();
     if (state.currentView === "production") renderProduction();
+    if (state.currentView === "finance") renderFinance();
     if (state.currentView === "dashboard") renderDashboard();
     if (state.currentView === "more") renderMore();
   }
@@ -1615,6 +1652,20 @@
       const order = state.orders.find((item) => item.id === target.dataset.whatsappOrder);
       if (!order) return showToast("Pedido não encontrado.");
       return sendOrderWhatsApp(order);
+    }
+    if (target.dataset.payOrder) {
+      const order = state.orders.find((item) => item.id === target.dataset.payOrder);
+      if (!order) return showToast("Pedido não encontrado.");
+      const ok = confirm(`Dar baixa no pagamento de ${order.client || "cliente"} e marcar o pedido como pago?`);
+      if (!ok) return;
+      order.paymentStatus = "paid";
+      order.depositPercent = "100";
+      order.deposit = orderTotal(order);
+      order.paymentUpdatedAt = new Date().toISOString();
+      addHistory(order, "Pagamento baixado como recebido.");
+      await saveOrder(order, "Dar baixa no pagamento");
+      showToast("Pagamento baixado.");
+      return;
     }
     if (target.dataset.completeOrder) {
       const order = state.orders.find((item) => item.id === target.dataset.completeOrder);

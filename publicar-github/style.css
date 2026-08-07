@@ -245,6 +245,38 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   display: block;
   line-height: 1.35;
 }
+
+.finance-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.finance-card {
+  display: grid;
+  gap: 14px;
+}
+
+.finance-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.finance-values span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border-radius: 14px;
+  background: #fff7fb;
+  padding: 10px;
+  color: var(--muted);
+}
+
+.finance-values strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+}
 .day-heading {
   color: #7a346b;
   font-size: 1.55rem;
