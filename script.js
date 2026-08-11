@@ -1542,6 +1542,7 @@
           <div><span class="muted">Frete pago por</span><strong>${order.freightPayer === "studio" ? "Ateliê" : "Cliente"}</strong></div>
           <div><span class="muted">Telefone</span><strong>${order.phone || "Não informado"}</strong></div>
           <div><span class="muted">Criança</span><strong>${order.child || "Não informado"}</strong></div>
+          <div><span class="muted">Idade do aniversariante</span><strong>${order.age || "Não informado"}</strong></div>
         </div>
         <p class="muted" style="margin-top: 14px;">${order.notes || "Sem observações."}</p>
         <div class="actions">
