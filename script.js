@@ -2,6 +2,7 @@
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
   const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7) };
+  let appHistoryReady = false;
   let deferredInstallPrompt = null;
   let installReminderDismissed = false;
 
@@ -334,11 +335,24 @@
     await loadOrders();
     await loadClients();
     await maybeShowBackupReminder();
+    prepareAppHistory(state.currentView);
     render();
   }
 
-  function setScreen(view) {
+  function prepareAppHistory(view) {
+    if (!window.history || !window.history.replaceState) return;
+    window.history.replaceState({ pedidoView: view || "day" }, "", window.location.href);
+    appHistoryReady = true;
+  }
+
+  function pushAppHistory(view) {
+    if (!appHistoryReady || !window.history || !window.history.pushState) return;
+    window.history.pushState({ pedidoView: view }, "", window.location.href);
+  }
+
+  function setScreen(view, options = {}) {
     if (view === "production") view = "day";
+    const previousView = state.currentView;
     state.currentView = view;
     $$(".screen").forEach((screen) => screen.classList.add("hidden"));
     const map = {
@@ -360,6 +374,7 @@
     $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     $("#fabNewOrder").classList.toggle("hidden", view === "form");
     render();
+    if (!options.fromHistory && view !== previousView) pushAppHistory(view);
     if (view === "detail") {
       window.scrollTo({ top: 0, behavior: "auto" });
       $("#app").scrollTop = 0;
@@ -2039,6 +2054,16 @@
     deferredInstallPrompt = null;
     updateInstallPanel();
     showToast("Pedido em Dia salvo como aplicativo.");
+  });
+
+  window.addEventListener("popstate", (event) => {
+    if ($("#app").classList.contains("hidden")) return;
+    const view = event.state && event.state.pedidoView;
+    if (view && screenMeta[view]) {
+      setScreen(view, { fromHistory: true });
+      return;
+    }
+    prepareAppHistory(state.currentView);
   });
 
   checkAuth();
