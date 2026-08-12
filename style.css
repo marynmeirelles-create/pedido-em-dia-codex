@@ -420,6 +420,13 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
 
 .task-list, .order-list, .timeline { display: grid; gap: 10px; }
 
+.order-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
+  gap: 14px;
+  align-items: end;
+}
+
 .task, .order-row, .timeline-row {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -1144,7 +1151,7 @@ a.btn {
 
 @media (max-width: 760px) {
   .app-shell { padding-inline: 14px; }
-  .grid.two, .grid.three, .form-grid { grid-template-columns: 1fr; }
+  .grid.two, .grid.three, .form-grid, .order-filters { grid-template-columns: 1fr; }
   .settings-form .actions, .password-field { grid-template-columns: 1fr; }
   .clients-hero, .client-card { align-items: stretch; flex-direction: column; }
   .client-grid, .segmented { grid-template-columns: 1fr; }

@@ -1,7 +1,7 @@
 ﻿(function () {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-  const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7) };
+  const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7), orderSearch: "", orderPhaseFilter: "" };
   let appHistoryReady = false;
   let deferredInstallPrompt = null;
   let installReminderDismissed = false;
@@ -117,6 +117,10 @@
       '"': "&quot;",
       "'": "&#039;"
     })[char]);
+  }
+
+  function normalizeText(value) {
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   }
 
   function safeFileName(value) {
@@ -481,16 +485,57 @@
     `;
   }
 
-  function renderOrders() {
-    const term = ($("#orderSearch") && $("#orderSearch").value.toLowerCase()) || "";
-    const orders = activeOrders().filter((order) => JSON.stringify(order).toLowerCase().includes(term));
+  function renderOrders(focusSearch = false) {
+    const term = normalizeText(state.orderSearch).trim();
+    const phaseFilter = state.orderPhaseFilter;
+    const orders = activeOrders()
+      .filter((order) => {
+        const phase = order.productionPhase || (order.done ? "finished" : "send_art");
+        if (phaseFilter && phase !== phaseFilter) return false;
+        if (!term) return true;
+        const itemText = (order.items || []).map((item) => item.name).join(" ");
+        const searchable = [
+          order.client,
+          order.phone,
+          order.theme,
+          order.child,
+          order.age,
+          itemText,
+          phaseLabels[phase],
+          status(order)[0],
+          order.notes
+        ].join(" ");
+        const normalizedSearchable = normalizeText(searchable);
+        return normalizedSearchable.includes(term);
+      })
+      .sort((a, b) => (b.createdAt || b.updatedAt || "").localeCompare(a.createdAt || a.updatedAt || ""));
     $("#ordersView").innerHTML = `
-      <div class="card">
-        <input id="orderSearch" type="search" placeholder="Pesquisar cliente, tema, item ou telefone" value="${term}">
+      <div class="card order-filters">
+        <label>Pesquisar pedido
+          <input id="orderSearch" type="search" placeholder="Cliente, tema, item, telefone ou status" value="${escapeHtml(state.orderSearch)}">
+        </label>
+        <label>Filtrar por cronograma
+          <select id="orderPhaseFilter">
+            <option value="">Todas as fases</option>
+            ${productionPhases.map(([value, text]) => `<option value="${value}" ${phaseFilter === value ? "selected" : ""}>${text}</option>`).join("")}
+          </select>
+        </label>
       </div>
       <div class="order-list">${orders.length ? orders.map(orderButton).join("") : emptyCard("Nenhum pedido encontrado", "Cadastre uma encomenda para começar sua agenda.")}</div>
     `;
-    $("#orderSearch").addEventListener("input", renderOrders);
+    $("#orderSearch").addEventListener("input", (event) => {
+      state.orderSearch = event.target.value;
+      renderOrders(true);
+    });
+    $("#orderPhaseFilter").addEventListener("change", (event) => {
+      state.orderPhaseFilter = event.target.value;
+      renderOrders();
+    });
+    if (focusSearch) {
+      const search = $("#orderSearch");
+      search.focus();
+      search.setSelectionRange(search.value.length, search.value.length);
+    }
   }
 
   function clientsFromOrders() {

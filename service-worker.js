@@ -1,14 +1,14 @@
-﻿const CACHE_NAME = "pedido-em-dia-v49";
+﻿const CACHE_NAME = "pedido-em-dia-v50";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=49",
-  "./layout-fix.css?v=49",
-  "./script.js?v=49",
-  "./compat-fix.js?v=49",
-  "./db.js?v=49",
-  "./backup.js?v=49",
-  "./manifest.json?v=49",
+  "./style.css?v=50",
+  "./layout-fix.css?v=50",
+  "./script.js?v=50",
+  "./compat-fix.js?v=50",
+  "./db.js?v=50",
+  "./backup.js?v=50",
+  "./manifest.json?v=50",
   "./assets/pedido-em-dia-logo.png",
   "./assets/pedido-em-dia-logo-transparent.png",
   "./assets/icon-192.png",
