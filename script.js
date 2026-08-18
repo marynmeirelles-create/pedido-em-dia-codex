@@ -72,7 +72,7 @@
   }
 
   function paymentMonthKey(order) {
-    return monthKeyFromDate(order.paymentUpdatedAt || order.updatedAt || order.createdAt || order.deliveryDate || todayISO());
+    return monthKeyFromDate(order.paymentDate || order.paymentUpdatedAt || order.updatedAt || order.createdAt || order.deliveryDate || todayISO());
   }
 
   function showToast(message) {
@@ -205,6 +205,27 @@
     if (order.paymentStatus === "paid") return orderTotal(order);
     if (order.paymentStatus === "deposit") return Number(order.deposit || 0);
     return 0;
+  }
+
+  function paymentDateValue(order) {
+    if (!order || paidAmount(order) <= 0) return "";
+    return order.paymentDate || (order.paymentUpdatedAt || "").slice(0, 10) || todayISO();
+  }
+
+  function normalizePaymentDate(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    const isValidDate = (iso) => {
+      const [year, month, day] = iso.split("-").map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    };
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return isValidDate(text) ? text : "";
+    const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) return "";
+    const [, day, month, year] = match;
+    const iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    return isValidDate(iso) ? iso : "";
   }
 
   function balance(order) {
@@ -794,6 +815,7 @@
               <span><strong>Total</strong>${money(orderTotal(order))}</span>
               <span><strong>Sinal</strong>${money(Number(order.deposit || 0))}</span>
               <span><strong>A receber</strong>${money(balance(order))}</span>
+              <span><strong>Recebido em</strong>${paymentDateValue(order) ? formatDate(paymentDateValue(order)) : "Sem data"}</span>
             </div>
             <div class="actions">
               <button class="btn btn-success" data-pay-order="${order.id}">Dar baixa</button>
@@ -1174,6 +1196,7 @@
     const data = order || {
       items: [{ name: "", quantity: 1, unitPrice: 0 }],
       paymentStatus: "unpaid",
+      paymentDate: "",
       depositPercent: "",
       paymentMethod: "",
       discountMode: "value",
@@ -1241,6 +1264,7 @@
               <option value="paid" ${data.paymentStatus === "paid" ? "selected" : ""}>Pago</option>
             </select>
           </label>
+          <label>Data do pagamento/recebimento<input name="paymentDate" type="date" value="${paymentDateValue(data)}"></label>
           <label>Porcentagem do sinal
             <select name="depositPercent">
               <option value="" ${!data.depositPercent ? "selected" : ""}>Escolher porcentagem</option>
@@ -1625,6 +1649,7 @@
           <div><span class="muted">Saldo</span><strong>${money(balance(order))}</strong></div>
           <div><span class="muted">Fase da produção</span><strong>${phaseLabels[order.productionPhase || (order.done ? "finished" : "send_art")]}</strong></div>
           <div><span class="muted">Pagamento</span><strong>${optionLabel(order.paymentMethod, paymentLabels)}</strong></div>
+          <div><span class="muted">Data do pagamento</span><strong>${paymentDateValue(order) ? formatDate(paymentDateValue(order)) : "Não informado"}</strong></div>
           <div><span class="muted">Entrega</span><strong>${optionLabel(order.deliveryMethod, deliveryLabels)}</strong></div>
           <div><span class="muted">Frete pago por</span><strong>${order.freightPayer === "studio" ? "Ateliê" : "Cliente"}</strong></div>
           <div><span class="muted">Telefone</span><strong>${order.phone || "Não informado"}</strong></div>
@@ -1709,9 +1734,12 @@
     const now = new Date().toISOString();
     const nextPaymentStatus = formData.get("paymentStatus");
     const nextDeposit = Number(formData.get("deposit") || 0);
+    const rawPaymentDate = formData.get("paymentDate");
+    const nextPaymentDate = nextPaymentStatus === "unpaid" ? "" : rawPaymentDate || paymentDateValue(existing) || todayISO();
     const paymentChanged = !existing
       || existing.paymentStatus !== nextPaymentStatus
-      || Number(existing.deposit || 0) !== nextDeposit;
+      || Number(existing.deposit || 0) !== nextDeposit
+      || (existing.paymentDate || "") !== nextPaymentDate;
     Object.assign(order, {
       client: formData.get("client").trim(),
       phone: formData.get("phone").trim(),
@@ -1727,6 +1755,7 @@
       freightPayer: formData.get("freightPayer"),
       freightValue: Number(formData.get("freightValue") || 0),
       paymentStatus: nextPaymentStatus,
+      paymentDate: nextPaymentDate,
       depositPercent: formData.get("depositPercent"),
       deposit: nextDeposit,
       notes: formData.get("notes").trim(),
@@ -1933,11 +1962,15 @@
       if (!order) return showToast("Pedido não encontrado.");
       const ok = confirm(`Dar baixa no pagamento de ${order.client || "cliente"} e marcar o pedido como pago?`);
       if (!ok) return;
+      const typedDate = prompt("Informe a data em que o pagamento foi recebido.\nUse o formato DD/MM/AAAA ou AAAA-MM-DD.", paymentDateValue(order) || todayISO());
+      const paymentDate = normalizePaymentDate(typedDate);
+      if (!paymentDate) return showToast("Data do pagamento inválida.");
       order.paymentStatus = "paid";
       order.depositPercent = "100";
       order.deposit = orderTotal(order);
+      order.paymentDate = paymentDate;
       order.paymentUpdatedAt = new Date().toISOString();
-      addHistory(order, "Pagamento baixado como recebido.");
+      addHistory(order, `Pagamento baixado como recebido em ${formatDate(paymentDate)}.`);
       await saveOrder(order, "Dar baixa no pagamento");
       showToast("Pagamento baixado.");
       return;
@@ -2192,6 +2225,13 @@
       return;
     }
     if (!event.target.closest("#orderForm")) return;
+    if (event.target.name === "paymentStatus") {
+      const paymentDateInput = event.target.form.elements.paymentDate;
+      if (paymentDateInput) {
+        if (event.target.value === "unpaid") paymentDateInput.value = "";
+        else if (!paymentDateInput.value) paymentDateInput.value = todayISO();
+      }
+    }
     if (event.target.name === "depositPercent") updateOrderFormTotal();
     if (["discountMode", "freightPayer", "deliveryMethod"].includes(event.target.name)) updateOrderFormTotal();
   });
