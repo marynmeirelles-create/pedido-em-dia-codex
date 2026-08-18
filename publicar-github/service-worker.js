@@ -1,14 +1,14 @@
-﻿const CACHE_NAME = "pedido-em-dia-v50";
+﻿const CACHE_NAME = "pedido-em-dia-v51";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=50",
-  "./layout-fix.css?v=50",
-  "./script.js?v=50",
-  "./compat-fix.js?v=50",
-  "./db.js?v=50",
-  "./backup.js?v=50",
-  "./manifest.json?v=50",
+  "./style.css?v=51",
+  "./layout-fix.css?v=51",
+  "./script.js?v=51",
+  "./compat-fix.js?v=51",
+  "./db.js?v=51",
+  "./backup.js?v=51",
+  "./manifest.json?v=51",
   "./assets/pedido-em-dia-logo.png",
   "./assets/pedido-em-dia-logo-transparent.png",
   "./assets/icon-192.png",
@@ -38,6 +38,19 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).catch(() => caches.match("./index.html")))
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || "./", self.registration.scope).href;
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.startsWith(self.registration.scope) && "focus" in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(targetUrl);
+    })
   );
 });
 

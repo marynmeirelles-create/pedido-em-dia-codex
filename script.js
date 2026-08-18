@@ -339,6 +339,7 @@
     await loadOrders();
     await loadClients();
     await maybeShowBackupReminder();
+    maybeShowUrgentOrderNotification().catch(() => {});
     prepareAppHistory(state.currentView);
     render();
   }
@@ -398,6 +399,12 @@
       receber: orders.filter((o) => balance(o) > 0),
       atencao: orders.filter((o) => !isFinalizedOrder(o) && daysUntil(o.deliveryDate) < 0)
     };
+  }
+
+  function urgentOrdersForNotification() {
+    return activeOrders()
+      .filter((order) => !isFinalizedOrder(order) && daysUntil(order.deliveryDate) <= 3)
+      .sort((a, b) => (a.deliveryDate || "").localeCompare(b.deliveryDate || ""));
   }
 
   function emptyCard(title, text) {
@@ -984,6 +991,16 @@
     const pixType = await AtelieDB.getSetting("pixType", "CPF");
     const pixKey = await AtelieDB.getSetting("pixKey", "");
     const pixName = await AtelieDB.getSetting("pixName", "");
+    const urgentNotificationsEnabled = await AtelieDB.getSetting("urgentNotificationsEnabled", false);
+    const notificationSupported = "Notification" in window && "serviceWorker" in navigator;
+    const notificationPermission = notificationSupported ? Notification.permission : "unsupported";
+    const notificationStatus = !notificationSupported
+      ? "Este navegador não oferece notificações para este app."
+      : notificationPermission === "granted" && urgentNotificationsEnabled
+        ? "Lembretes ativados neste aparelho."
+        : notificationPermission === "denied"
+          ? "As notificações estão bloqueadas nas configurações do navegador."
+          : "Lembretes desativados neste aparelho.";
     const snapshots = (await AtelieDB.getAll("snapshots")).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
     const daysSinceBackup = lastBackupAt ? Math.floor((Date.now() - new Date(lastBackupAt).getTime()) / 86400000) : null;
     const isOutdated = !lastBackupAt || (Number(frequency) && daysSinceBackup >= Number(frequency));
@@ -1019,6 +1036,16 @@
           </div>
           <button class="btn btn-primary full" type="submit">💾 Salvar meus dados</button>
         </form>
+      </div>
+      <div class="card notification-card">
+        <h3>🔔 Lembretes de pedidos urgentes</h3>
+        <p class="muted">O app pode avisar quando houver pedidos com entrega em até 3 dias ou pedidos atrasados. O lembrete aparece ao abrir o app e, quando o celular permitir, também como notificação do aparelho.</p>
+        <p class="backup-status ${notificationPermission === "granted" && urgentNotificationsEnabled ? "ok" : "warning"}">${notificationStatus}</p>
+        <div class="actions">
+          <button class="btn ${urgentNotificationsEnabled ? "btn-secondary" : "btn-primary"}" data-toggle-urgent-notifications>${urgentNotificationsEnabled ? "Desativar lembretes" : "Ativar lembretes no celular"}</button>
+          <button class="btn btn-soft" data-test-urgent-notification>Testar lembrete</button>
+        </div>
+        <p class="small-note">Para funcionar melhor no celular, use o Pedido em Dia instalado na tela inicial e mantenha as notificações permitidas no navegador.</p>
       </div>
       <div class="card backup-alert">
         <h3>Backup dos dados</h3>
@@ -1728,6 +1755,76 @@
     }
   }
 
+  async function requestUrgentNotificationPermission() {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+      showToast("Este navegador não permite notificações do app.");
+      return false;
+    }
+    const permission = Notification.permission === "default"
+      ? await Notification.requestPermission()
+      : Notification.permission;
+    if (permission !== "granted") {
+      await AtelieDB.setSetting("urgentNotificationsEnabled", false);
+      showToast("As notificações não foram permitidas.");
+      return false;
+    }
+    await AtelieDB.setSetting("urgentNotificationsEnabled", true);
+    showToast("Lembretes ativados.");
+    return true;
+  }
+
+  async function showSystemNotification(title, options = {}) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return false;
+    if ("serviceWorker" in navigator) {
+      const registration = await getServiceWorkerRegistration();
+      await registration.showNotification(title, {
+        icon: "assets/icon-192.png",
+        badge: "assets/icon-192.png",
+        tag: "pedido-em-dia-urgentes",
+        renotify: true,
+        ...options
+      });
+      return true;
+    }
+    new Notification(title, options);
+    return true;
+  }
+
+  async function getServiceWorkerRegistration() {
+    let registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) registration = await navigator.serviceWorker.register("service-worker.js");
+    return navigator.serviceWorker.ready;
+  }
+
+  async function maybeShowUrgentOrderNotification(force = false) {
+    const enabled = await AtelieDB.getSetting("urgentNotificationsEnabled", false);
+    if (!enabled && !force) return;
+    const urgentOrders = urgentOrdersForNotification();
+    if (!urgentOrders.length) {
+      if (force) showToast("Nenhum pedido urgente no momento.");
+      return;
+    }
+    if (!force) {
+      const alreadySent = await AtelieDB.getSetting("lastUrgentNotificationDate", "");
+      if (alreadySent === todayISO()) return;
+    }
+    const first = urgentOrders[0];
+    const title = urgentOrders.length === 1 ? "Pedido urgente" : `${urgentOrders.length} pedidos urgentes`;
+    const body = urgentOrders.length === 1
+      ? `${first.client || "Cliente"} · ${first.theme || "Sem tema"} · entrega ${formatDate(first.deliveryDate)}`
+      : `Entrega mais próxima: ${first.client || "Cliente"} · ${formatDate(first.deliveryDate)}.`;
+    const shown = await showSystemNotification(title, {
+      body,
+      data: { url: "./" }
+    });
+    if (shown) {
+      await AtelieDB.setSetting("lastUrgentNotificationDate", todayISO());
+      if (force) showToast("Lembrete enviado.");
+    } else if (force) {
+      showToast("Não foi possível mostrar a notificação neste aparelho.");
+    }
+  }
+
   function showBackupSuggestion(title, text) {
     const reminder = $("#backupReminder");
     if (!reminder) return;
@@ -1894,6 +1991,22 @@
       if (!ok) return;
       await AtelieDB.clear("snapshots");
       showToast("Histórico local limpo.");
+      return renderMore();
+    }
+    if (target.dataset.toggleUrgentNotifications !== undefined) {
+      const enabled = await AtelieDB.getSetting("urgentNotificationsEnabled", false);
+      if (enabled) {
+        await AtelieDB.setSetting("urgentNotificationsEnabled", false);
+        showToast("Lembretes desativados.");
+        return renderMore();
+      }
+      const granted = await requestUrgentNotificationPermission();
+      if (granted) await maybeShowUrgentOrderNotification(true);
+      return renderMore();
+    }
+    if (target.dataset.testUrgentNotification !== undefined) {
+      const granted = await requestUrgentNotificationPermission();
+      if (granted) await maybeShowUrgentOrderNotification(true);
       return renderMore();
     }
     if (target.dataset.copyPix !== undefined) {
@@ -2086,7 +2199,7 @@
   $("#restoreFile").addEventListener("change", (event) => restoreBackup(event.target.files[0]));
 
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js"));
+    window.addEventListener("load", () => getServiceWorkerRegistration().catch(() => {}));
   }
 
   window.addEventListener("beforeinstallprompt", (event) => {

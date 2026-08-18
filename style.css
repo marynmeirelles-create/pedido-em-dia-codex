@@ -756,6 +756,15 @@ input:focus, textarea:focus, select:focus { border-color: var(--pink); box-shado
   margin-bottom: 14px;
 }
 
+.notification-card {
+  border-color: rgba(123, 255, 206, 0.32);
+  background: linear-gradient(135deg, #fff, #effff9);
+}
+
+.notification-card .actions {
+  margin-top: 12px;
+}
+
 .settings-form {
   display: grid;
   gap: 14px;
