@@ -1,6 +1,6 @@
 (function () {
   const DB_NAME = "atelie-em-dia";
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   let dbPromise;
 
   function openDB() {
@@ -11,6 +11,7 @@
         const db = request.result;
         if (!db.objectStoreNames.contains("orders")) db.createObjectStore("orders", { keyPath: "id" });
         if (!db.objectStoreNames.contains("clients")) db.createObjectStore("clients", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("products")) db.createObjectStore("products", { keyPath: "id" });
         if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings", { keyPath: "key" });
         if (!db.objectStoreNames.contains("snapshots")) db.createObjectStore("snapshots", { keyPath: "id" });
       };
@@ -82,12 +83,13 @@
   async function snapshot(reason) {
     const orders = await getAll("orders");
     const clients = await getAll("clients");
+    const products = await getAll("products");
     const settings = await getAll("settings");
     const row = {
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       reason,
-      data: { orders, clients, settings }
+      data: { orders, clients, products, settings }
     };
     await put("snapshots", row);
     const snapshots = (await getAll("snapshots")).sort((a, b) => b.createdAt.localeCompare(a.createdAt));

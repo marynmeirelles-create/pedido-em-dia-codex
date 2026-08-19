@@ -1,7 +1,7 @@
 ﻿(function () {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-  const state = { orders: [], clients: [], currentView: "day", editingId: null, editingClientId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7), orderSearch: "", orderPhaseFilter: "" };
+  const state = { orders: [], clients: [], products: [], currentView: "day", editingId: null, editingClientId: null, editingProductId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7), orderSearch: "", orderPhaseFilter: "" };
   let appHistoryReady = false;
   let deferredInstallPrompt = null;
   let installReminderDismissed = false;
@@ -9,6 +9,7 @@
   const screenMeta = {
     day: ["Meu Dia", ""],
     clients: ["Clientes", "Cadastro e contatos"],
+    products: ["Produtos", "Tabela de preços"],
     agenda: ["Agenda", "Quando cada pedido vence?"],
     orders: ["Pedidos", "Como está cada encomenda?"],
     production: ["Produção", "O que precisa ser fabricado?"],
@@ -257,6 +258,10 @@
     state.clients = (await AtelieDB.getAll("clients")).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }
 
+  async function loadProducts() {
+    state.products = (await AtelieDB.getAll("products")).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }
+
   const rememberedPasswordKey = "PedidoEmDiaRememberedPassword";
   const authenticatedSessionKey = "PedidoEmDiaAuthenticatedSession";
 
@@ -359,6 +364,7 @@
     $("#app").classList.remove("hidden");
     await loadOrders();
     await loadClients();
+    await loadProducts();
     await maybeShowBackupReminder();
     maybeShowUrgentOrderNotification().catch(() => {});
     prepareAppHistory(state.currentView);
@@ -384,6 +390,7 @@
     const map = {
       day: "#dayView",
       clients: "#clientsView",
+      products: "#productsView",
       agenda: "#agendaView",
       orders: "#ordersView",
       production: "#productionView",
@@ -655,6 +662,54 @@
       </form>
     `;
     $("#clientFormBox").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderProducts() {
+    $("#productsView").innerHTML = `
+      <div class="card clients-hero">
+        <div>
+          <p class="eyebrow">Produtos</p>
+          <h3>Tabela de produtos e preços</h3>
+          <p class="muted">Cadastre os itens mais vendidos para selecionar rapidamente ao criar um pedido.</p>
+        </div>
+        <button class="btn btn-primary" data-new-product>Novo produto</button>
+      </div>
+      <div id="productFormBox" class="card client-form-card hidden"></div>
+      <div class="client-list">
+        ${state.products.length ? state.products.map((product) => `
+          <div class="card product-card">
+            <div>
+              <strong>${escapeHtml(product.name || "Produto sem nome")}</strong>
+              <span class="muted">${money(product.price)}${product.notes ? ` · ${escapeHtml(product.notes)}` : ""}</span>
+            </div>
+            <div class="actions">
+              <button class="btn btn-secondary" data-edit-product="${product.id}">Editar</button>
+              <button class="btn btn-danger" data-delete-product="${product.id}">Excluir</button>
+            </div>
+          </div>
+        `).join("") : emptyCard("Nenhum produto cadastrado", "Cadastre produtos para agilizar a montagem dos pedidos.")}
+      </div>
+    `;
+  }
+
+  function renderProductForm(product = null) {
+    state.editingProductId = product ? product.id : null;
+    const data = product || {};
+    $("#productFormBox").classList.remove("hidden");
+    $("#productFormBox").innerHTML = `
+      <form id="productForm" class="client-form">
+        <div class="form-grid">
+          <label>Nome do produto<input name="name" value="${escapeHtml(data.name || "")}" placeholder="Ex.: Topo de bolo" required></label>
+          <label>Preço unitário<input name="price" type="number" min="0" step="0.01" value="${data.price || 0}" required></label>
+          <label class="span-2">Observações<textarea name="notes" placeholder="Tamanho, material ou observação sobre o produto">${escapeHtml(data.notes || "")}</textarea></label>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">${product ? "Salvar produto" : "Cadastrar produto"}</button>
+          <button class="btn btn-secondary" type="button" data-cancel-product>Cancelar</button>
+        </div>
+      </form>
+    `;
+    $("#productFormBox").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function renderAgenda() {
@@ -1327,11 +1382,27 @@
     depositInput.value = ((currentTotal * Number(percent)) / 100).toFixed(2);
   }
 
+  function itemProductOptions(item = {}) {
+    const selectedId = item.productId || "";
+    return [
+      `<option value="">Produto manual ou não cadastrado</option>`,
+      ...state.products.map((product) => {
+        const selected = selectedId === product.id || (!selectedId && item.name && item.name === product.name && Number(item.unitPrice || 0) === Number(product.price || 0));
+        return `<option value="${product.id}" ${selected ? "selected" : ""}>${escapeHtml(product.name)} - ${money(product.price)}</option>`;
+      })
+    ].join("");
+  }
+
   function itemFields(item = {}) {
     return `
       <div class="item-card">
         <div class="form-grid">
-          <label class="span-2">Nome do item<input name="itemName" value="${item.name || ""}" required></label>
+          <label class="span-2">Produto cadastrado
+            <select name="itemProduct" data-select-product>
+              ${itemProductOptions(item)}
+            </select>
+          </label>
+          <label class="span-2">Nome do item<input name="itemName" value="${escapeHtml(item.name || "")}" required></label>
           <label>Quantidade<input name="itemQuantity" type="number" min="1" step="1" value="${item.quantity || 1}" required></label>
           <label>Valor unitário<input name="itemPrice" type="number" min="0" step="0.01" value="${item.unitPrice || 0}" required></label>
         </div>
@@ -1713,6 +1784,7 @@
     if ($("#app").classList.contains("hidden")) return;
     if (state.currentView === "day") renderDay();
     if (state.currentView === "clients") renderClients();
+    if (state.currentView === "products") renderProducts();
     if (state.currentView === "agenda") renderAgenda();
     if (state.currentView === "orders") renderOrders();
     if (state.currentView === "production") renderProduction();
@@ -1725,6 +1797,7 @@
     const formData = new FormData(form);
     const itemCards = $$("#itemsBox .item-card");
     const items = itemCards.map((card) => ({
+      productId: card.querySelector('[name="itemProduct"]')?.value || "",
       name: card.querySelector('[name="itemName"]').value.trim(),
       quantity: Number(card.querySelector('[name="itemQuantity"]').value || 0),
       unitPrice: Number(card.querySelector('[name="itemPrice"]').value || 0)
@@ -1877,6 +1950,7 @@
       await AtelieBackup.importBackup(file);
       await loadOrders();
       await loadClients();
+      await loadProducts();
       render();
       showToast("Backup restaurado com sucesso.");
     } catch (error) {
@@ -1892,12 +1966,15 @@
     await AtelieDB.snapshot("Antes de restaurar versão local");
     await AtelieDB.clear("orders");
     await AtelieDB.clear("clients");
+    await AtelieDB.clear("products");
     await AtelieDB.clear("settings");
     for (const order of snapshot.data.orders || []) await AtelieDB.put("orders", order);
     for (const client of snapshot.data.clients || []) await AtelieDB.put("clients", client);
+    for (const product of snapshot.data.products || []) await AtelieDB.put("products", product);
     for (const setting of snapshot.data.settings || []) await AtelieDB.put("settings", setting);
     await loadOrders();
     await loadClients();
+    await loadProducts();
     render();
     showToast("Versão local restaurada com sucesso.");
   }
@@ -1927,6 +2004,22 @@
       state.editingClientId = null;
       $("#clientFormBox").classList.add("hidden");
       return;
+    }
+    if (target.dataset.newProduct !== undefined) return renderProductForm();
+    if (target.dataset.editProduct) return renderProductForm(state.products.find((product) => product.id === target.dataset.editProduct));
+    if (target.dataset.cancelProduct !== undefined) {
+      state.editingProductId = null;
+      $("#productFormBox").classList.add("hidden");
+      return;
+    }
+    if (target.dataset.deleteProduct) {
+      const product = state.products.find((item) => item.id === target.dataset.deleteProduct);
+      const ok = confirm(`Excluir ${product?.name || "este produto"} da tabela de preços?`);
+      if (!ok) return;
+      await AtelieDB.remove("products", target.dataset.deleteProduct);
+      await loadProducts();
+      renderProducts();
+      return showToast("Produto excluído.");
     }
     if (target.dataset.addItem !== undefined) {
       $("#itemsBox").insertAdjacentHTML("beforeend", itemFields());
@@ -2168,6 +2261,24 @@
       renderClients();
       return showToast("Cliente salvo.");
     }
+    if (event.target.id === "productForm") {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const existing = state.products.find((product) => product.id === state.editingProductId);
+      const product = existing ? { ...existing } : { id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+      Object.assign(product, {
+        name: formData.get("name").trim(),
+        price: Number(formData.get("price") || 0),
+        notes: formData.get("notes").trim(),
+        updatedAt: new Date().toISOString()
+      });
+      if (!product.name) return showToast("Informe o nome do produto.");
+      await AtelieDB.put("products", product);
+      await loadProducts();
+      state.editingProductId = null;
+      renderProducts();
+      return showToast("Produto salvo.");
+    }
     if (event.target.id !== "orderForm") return;
     event.preventDefault();
     const isNewOrder = !state.editingId;
@@ -2225,6 +2336,15 @@
       return;
     }
     if (!event.target.closest("#orderForm")) return;
+    if (event.target.name === "itemProduct") {
+      const product = state.products.find((item) => item.id === event.target.value);
+      const card = event.target.closest(".item-card");
+      if (product && card) {
+        card.querySelector('[name="itemName"]').value = product.name || "";
+        card.querySelector('[name="itemPrice"]').value = Number(product.price || 0).toFixed(2);
+        updateOrderFormTotal();
+      }
+    }
     if (event.target.name === "paymentStatus") {
       const paymentDateInput = event.target.form.elements.paymentDate;
       if (paymentDateInput) {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FF7BAC">
     <title>Pedido em Dia</title>
-    <link rel="manifest" href="manifest.json?v=52">
+    <link rel="manifest" href="manifest.json?v=53">
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,8 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=52">
-    <link rel="stylesheet" href="layout-fix.css?v=52">
+    <link rel="stylesheet" href="style.css?v=53">
+    <link rel="stylesheet" href="layout-fix.css?v=53">
   </head>
   <body>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -98,6 +98,7 @@
       <section id="dayView" class="screen"></section>
       <section id="agendaView" class="screen hidden"></section>
       <section id="clientsView" class="screen hidden"></section>
+      <section id="productsView" class="screen hidden"></section>
       <section id="ordersView" class="screen hidden"></section>
       <section id="productionView" class="screen hidden"></section>
       <section id="financeView" class="screen hidden"></section>
@@ -111,6 +112,7 @@
         <button data-view="orders" class="nav-item"><span>&#128203;</span>Pedidos</button>
         <button data-view="agenda" class="nav-item"><span>&#128197;</span>Agenda</button>
         <button data-view="clients" class="nav-item"><span>&#128100;</span>Clientes</button>
+        <button data-view="products" class="nav-item"><span>&#127991;</span>Produtos</button>
         <button data-view="finance" class="nav-item"><span>&#128179;</span>Financeiro</button>
       </nav>
 
@@ -118,10 +120,10 @@
     </div>
 
     <input id="restoreFile" type="file" accept="application/json,.json" class="hidden">
-    <script src="db.js?v=52"></script>
-    <script src="backup.js?v=52"></script>
-    <script src="compat-fix.js?v=52"></script>
-    <script src="script.js?v=52"></script>
+    <script src="db.js?v=53"></script>
+    <script src="backup.js?v=53"></script>
+    <script src="compat-fix.js?v=53"></script>
+    <script src="script.js?v=53"></script>
   </body>
 </html>
 

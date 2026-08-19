@@ -15,13 +15,14 @@
     await AtelieDB.snapshot("Backup salvo pela usuária");
     const orders = await AtelieDB.getAll("orders");
     const clients = await AtelieDB.getAll("clients");
+    const products = await AtelieDB.getAll("products");
     const settings = await AtelieDB.getAll("settings");
     const snapshots = await AtelieDB.getAll("snapshots");
     const data = {
       kind: BACKUP_KIND,
       version: 1,
       exportedAt: new Date().toISOString(),
-      data: { orders, clients, settings, snapshots }
+      data: { orders, clients, products, settings, snapshots }
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -47,9 +48,11 @@
     await AtelieDB.snapshot("Antes de restaurar backup");
     await AtelieDB.clear("orders");
     await AtelieDB.clear("clients");
+    await AtelieDB.clear("products");
     await AtelieDB.clear("settings");
     for (const order of parsed.data.orders || []) await AtelieDB.put("orders", order);
     for (const client of parsed.data.clients || []) await AtelieDB.put("clients", client);
+    for (const product of parsed.data.products || []) await AtelieDB.put("products", product);
     for (const setting of parsed.data.settings || []) await AtelieDB.put("settings", setting);
     for (const snapshot of parsed.data.snapshots || []) await AtelieDB.put("snapshots", snapshot);
     const snapshots = (await AtelieDB.getAll("snapshots")).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
