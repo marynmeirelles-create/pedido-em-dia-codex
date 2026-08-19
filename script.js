@@ -362,12 +362,16 @@
     rememberAuthenticatedSession();
     $("#auth").classList.add("hidden");
     $("#app").classList.remove("hidden");
+    state.currentView = "day";
+    state.editingId = null;
+    state.editingClientId = null;
+    state.editingProductId = null;
     await loadOrders();
     await loadClients();
     await loadProducts();
     await maybeShowBackupReminder();
     maybeShowUrgentOrderNotification().catch(() => {});
-    prepareAppHistory(state.currentView);
+    prepareAppHistory("day");
     render();
   }
 
