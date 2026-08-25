@@ -330,6 +330,11 @@
     return String(name || "").trim().toLocaleLowerCase("pt-BR");
   }
 
+  function findCatalogProductByName(name) {
+    const key = normalizeProductName(name);
+    return state.products.find((product) => normalizeProductName(product.name) === key);
+  }
+
   async function offerToSaveManualProducts(order) {
     const existingNames = new Set(state.products.map((product) => normalizeProductName(product.name)));
     const manualItems = [];
@@ -1312,6 +1317,7 @@
         </div>
         <h3>Itens do pedido</h3>
         <div id="itemsBox" class="grid">${(data.items || []).map(itemFields).join("")}</div>
+        <datalist id="productCatalogOptions">${productDatalistOptions()}</datalist>
         <div class="actions item-actions">
           <button type="button" class="btn btn-secondary" data-add-item>Adicionar item</button>
         </div>
@@ -1420,27 +1426,32 @@
     depositInput.value = ((currentTotal * Number(percent)) / 100).toFixed(2);
   }
 
-  function itemProductOptions(item = {}) {
-    const selectedId = item.productId || "";
-    return [
-      `<option value="">Produto manual ou não cadastrado</option>`,
-      ...state.products.map((product) => {
-        const selected = selectedId === product.id || (!selectedId && item.name && item.name === product.name && Number(item.unitPrice || 0) === Number(product.price || 0));
-        return `<option value="${product.id}" ${selected ? "selected" : ""}>${escapeHtml(product.name)} - ${money(product.price)}</option>`;
-      })
-    ].join("");
+  function productDatalistOptions() {
+    return state.products
+      .map((product) => `<option value="${escapeHtml(product.name || "")}" label="${money(product.price)}"></option>`)
+      .join("");
+  }
+
+  function applyCatalogProductToItem(input) {
+    const card = input.closest(".item-card");
+    if (!card) return;
+    const product = findCatalogProductByName(input.value);
+    const productInput = card.querySelector('[name="itemProduct"]');
+    const priceInput = card.querySelector('[name="itemPrice"]');
+    if (!product) {
+      if (productInput) productInput.value = "";
+      return;
+    }
+    if (productInput) productInput.value = product.id;
+    if (priceInput) priceInput.value = Number(product.price || 0).toFixed(2);
+    updateOrderFormTotal();
   }
 
   function itemFields(item = {}) {
     return `
       <div class="item-card">
         <div class="form-grid">
-          <label class="span-2">Produto cadastrado
-            <select name="itemProduct" data-select-product>
-              ${itemProductOptions(item)}
-            </select>
-          </label>
-          <label class="span-2">Nome do item<input name="itemName" value="${escapeHtml(item.name || "")}" required></label>
+          <label class="span-2">Item do pedido<input name="itemName" list="productCatalogOptions" value="${escapeHtml(item.name || "")}" placeholder="Digite ou selecione um produto do catálogo" required><input name="itemProduct" type="hidden" value="${escapeHtml(item.productId || "")}"></label>
           <label>Quantidade<input name="itemQuantity" type="number" min="1" step="1" value="${item.quantity || 1}" required></label>
           <label>Valor unitário<input name="itemPrice" type="number" min="0" step="0.01" value="${item.unitPrice || ""}" required></label>
         </div>
@@ -1448,7 +1459,6 @@
       </div>
     `;
   }
-
   function checklistDocument(order) {
     const rows = ["Impressão", "Corte", "Montagem", "Embalagem"];
     const items = (order.items || []).map((item) => `
@@ -2337,6 +2347,7 @@
 
   document.addEventListener("input", (event) => {
     if (!event.target.closest("#orderForm")) return;
+    if (event.target.name === "itemName") applyCatalogProductToItem(event.target);
     if (["itemQuantity", "itemPrice", "discountValue", "freightValue"].includes(event.target.name)) updateOrderFormTotal();
     if (event.target.name === "deposit") {
       const percent = event.target.form.elements.depositPercent;
@@ -2425,6 +2436,9 @@
 
   checkAuth();
 })();
+
+
+
 
 
 
