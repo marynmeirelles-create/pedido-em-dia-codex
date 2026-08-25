@@ -35,6 +35,15 @@
 
   const phaseLabels = Object.fromEntries(productionPhases);
 
+  function parseMoney(value) {
+    const text = String(value ?? "").trim();
+    if (!text) return 0;
+    const normalized = text.includes(",")
+      ? text.replace(/\./g, "").replace(",", ".")
+      : text;
+    const amount = Number(normalized);
+    return Number.isFinite(amount) ? amount : 0;
+  }
   function money(value) {
     return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
@@ -89,17 +98,17 @@
   }
 
   function itemsSubtotal(order) {
-    return (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0);
+    return (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0) * parseMoney(item.unitPrice), 0);
   }
 
   function discountAmount(order) {
     const subtotal = itemsSubtotal(order);
-    if (order.discountMode === "percent") return Math.min(subtotal, subtotal * Number(order.discountValue || 0) / 100);
-    return Math.min(subtotal, Number(order.discountValue || 0));
+    if (order.discountMode === "percent") return Math.min(subtotal, subtotal * parseMoney(order.discountValue) / 100);
+    return Math.min(subtotal, parseMoney(order.discountValue));
   }
 
   function freightCharged(order) {
-    return order.freightPayer === "client" ? Number(order.freightValue || 0) : 0;
+    return order.freightPayer === "client" ? parseMoney(order.freightValue) : 0;
   }
 
   function orderTotal(order) {
@@ -204,7 +213,7 @@
 
   function paidAmount(order) {
     if (order.paymentStatus === "paid") return orderTotal(order);
-    if (order.paymentStatus === "deposit") return Number(order.deposit || 0);
+    if (order.paymentStatus === "deposit") return parseMoney(order.deposit);
     return 0;
   }
 
@@ -340,7 +349,7 @@
     const manualItems = [];
     for (const item of order.items || []) {
       const name = String(item.name || "").trim();
-      const price = Number(item.unitPrice || 0);
+      const price = parseMoney(item.unitPrice);
       const key = normalizeProductName(name);
       if (!name || !price || item.productId || existingNames.has(key)) continue;
       existingNames.add(key);
@@ -520,7 +529,7 @@
           </span>
           <span class="day-order-money">
             <span><strong>Total:</strong> ${money(orderTotal(order))}</span>
-            <span><strong>Sinal:</strong> ${money(Number(order.deposit || 0))}</span>
+            <span><strong>Sinal:</strong> ${money(parseMoney(order.deposit))}</span>
             <span><strong>A receber:</strong> ${money(balance(order))}</span>
           </span>
           <em>Itens: ${items}</em>
@@ -743,7 +752,7 @@
       <form id="productForm" class="client-form">
         <div class="form-grid">
           <label>Nome do produto<input name="name" value="${escapeHtml(data.name || "")}" placeholder="Ex.: Topo de bolo" required></label>
-          <label>Preço unitário<input name="price" type="number" min="0" step="0.01" value="${data.price || ""}" required></label>
+          <label>Preço unitário<input name="price" type="text" inputmode="decimal" value="${data.price || ""}" required></label>
           <label class="span-2">Observações<textarea name="notes" placeholder="Tamanho, material ou observação sobre o produto">${escapeHtml(data.notes || "")}</textarea></label>
         </div>
         <div class="actions">
@@ -836,7 +845,7 @@
               <span class="chip ${status(order)[1]}">${status(order)[0]}</span>
             </div>
             <div class="task-list">
-              ${(order.items || []).map((item) => `<div class="task"><strong>${item.quantity || 0} × ${item.name || "Item"}</strong><span class="muted">${money(Number(item.quantity || 0) * Number(item.unitPrice || 0))}</span></div>`).join("")}
+              ${(order.items || []).map((item) => `<div class="task"><strong>${item.quantity || 0} × ${item.name || "Item"}</strong><span class="muted">${money(Number(item.quantity || 0) * parseMoney(item.unitPrice))}</span></div>`).join("")}
             </div>
             <div class="actions"><button class="btn btn-success" data-complete-order="${order.id}">Concluir produção</button><button class="btn btn-secondary" data-open-order="${order.id}">Abrir pedido</button></div>
           </div>
@@ -911,7 +920,7 @@
             </button>
             <div class="finance-values">
               <span><strong>Total</strong>${money(orderTotal(order))}</span>
-              <span><strong>Sinal</strong>${money(Number(order.deposit || 0))}</span>
+              <span><strong>Sinal</strong>${money(parseMoney(order.deposit))}</span>
               <span><strong>A receber</strong>${money(balance(order))}</span>
               <span><strong>Recebido em</strong>${paymentDateValue(order) ? formatDate(paymentDateValue(order)) : "Sem data"}</span>
             </div>
@@ -960,7 +969,7 @@
         const name = (item.name || "").trim() || "Item sem nome";
         const current = map.get(name) || { name, quantity: 0, total: 0, orders: 0 };
         current.quantity += Number(item.quantity || 0);
-        current.total += Number(item.quantity || 0) * Number(item.unitPrice || 0);
+        current.total += Number(item.quantity || 0) * parseMoney(item.unitPrice);
         current.orders += 1;
         map.set(name, current);
       }
@@ -1337,7 +1346,7 @@
               <option value="studio" ${data.freightPayer === "studio" ? "selected" : ""}>Ateliê</option>
             </select>
           </label>
-          <label class="span-2">Valor do frete<input name="freightValue" type="number" min="0" step="0.01" value="${data.freightValue || ""}"></label>
+          <label class="span-2">Valor do frete<input name="freightValue" type="text" inputmode="decimal" value="${data.freightValue || ""}"></label>
           <label>Forma de pagamento
             <select name="paymentMethod">
               <option value="" ${!data.paymentMethod ? "selected" : ""}>Selecionar forma</option>
@@ -1355,7 +1364,7 @@
               <option value="percent" ${data.discountMode === "percent" ? "selected" : ""}>Porcentagem %</option>
             </select>
           </label>
-          <label class="span-2">Valor ou porcentagem do desconto<input name="discountValue" type="number" min="0" step="0.01" value="${data.discountValue || ""}"></label>
+          <label class="span-2">Valor ou porcentagem do desconto<input name="discountValue" type="text" inputmode="decimal" value="${data.discountValue || ""}"></label>
           <label>Status de pagamento
             <select name="paymentStatus">
               <option value="unpaid" ${data.paymentStatus === "unpaid" ? "selected" : ""}>Não pago</option>
@@ -1374,7 +1383,7 @@
               <option value="manual" ${data.depositPercent === "manual" ? "selected" : ""}>Valor manual</option>
             </select>
           </label>
-          <label class="span-2">Valor do sinal<input name="deposit" type="number" min="0" step="0.01" value="${data.deposit || 0}"></label>
+          <label class="span-2">Valor do sinal<input name="deposit" type="text" inputmode="decimal" value="${data.deposit || ""}"></label>
           <label class="span-2">Observações<textarea name="notes">${data.notes || ""}</textarea></label>
         </div>
         <div class="order-total">
@@ -1397,13 +1406,13 @@
     if (!form || !totalBox) return;
     const subtotal = $$("#itemsBox .item-card").reduce((sum, card) => {
       const quantity = Number(card.querySelector('[name="itemQuantity"]').value || 0);
-      const unitPrice = Number(card.querySelector('[name="itemPrice"]').value || 0);
+      const unitPrice = parseMoney(card.querySelector('[name="itemPrice"]').value);
       return sum + quantity * unitPrice;
     }, 0);
     const discountMode = form.elements.discountMode.value;
-    const discountValue = Number(form.elements.discountValue.value || 0);
+    const discountValue = parseMoney(form.elements.discountValue.value);
     const discount = discountMode === "percent" ? Math.min(subtotal, subtotal * discountValue / 100) : Math.min(subtotal, discountValue);
-    const freight = form.elements.freightPayer.value === "client" ? Number(form.elements.freightValue.value || 0) : 0;
+    const freight = form.elements.freightPayer.value === "client" ? parseMoney(form.elements.freightValue.value) : 0;
     const total = Math.max(0, subtotal - discount + freight);
     $("#orderFormSubtotal").textContent = money(subtotal);
     $("#orderFormDiscount").textContent = money(discount);
@@ -1420,7 +1429,7 @@
     if (!depositInput || !percent || percent === "manual") return;
     const currentTotal = total ?? $$("#itemsBox .item-card").reduce((sum, card) => {
       const quantity = Number(card.querySelector('[name="itemQuantity"]').value || 0);
-      const unitPrice = Number(card.querySelector('[name="itemPrice"]').value || 0);
+      const unitPrice = parseMoney(card.querySelector('[name="itemPrice"]').value);
       return sum + quantity * unitPrice;
     }, 0);
     depositInput.value = ((currentTotal * Number(percent)) / 100).toFixed(2);
@@ -1453,7 +1462,7 @@
         <div class="form-grid">
           <label class="span-2">Item do pedido (catálogo ou manual)<input name="itemName" list="productCatalogOptions" value="${escapeHtml(item.name || "")}" placeholder="Digite o item ou selecione do catálogo" required><input name="itemProduct" type="hidden" value="${escapeHtml(item.productId || "")}"></label>
           <label>Quantidade<input name="itemQuantity" type="number" min="1" step="1" value="${item.quantity || 1}" required></label>
-          <label>Valor unitário<input name="itemPrice" type="number" min="0" step="0.01" value="${item.unitPrice || ""}" required></label>
+          <label>Valor unitário<input name="itemPrice" type="text" inputmode="decimal" value="${item.unitPrice || ""}" required></label>
         </div>
         <button type="button" class="btn btn-soft" data-remove-item>Excluir item</button>
       </div>
@@ -1465,7 +1474,7 @@
       <tr>
         <td>${escapeHtml(item.name || "Item")}</td>
         <td>${escapeHtml(item.quantity || 0)}</td>
-        <td>${escapeHtml(money(Number(item.quantity || 0) * Number(item.unitPrice || 0)))}</td>
+        <td>${escapeHtml(money(Number(item.quantity || 0) * parseMoney(item.unitPrice)))}</td>
       </tr>
     `).join("");
     return `<!doctype html>
@@ -1599,7 +1608,7 @@
     for (const item of items.slice(0, 12)) {
       cell(50, 300, 28, item.name || "Item");
       cell(350, 80, 28, item.quantity || "");
-      cell(430, 115, 28, item.quantity ? money(Number(item.quantity || 0) * Number(item.unitPrice || 0)) : "");
+      cell(430, 115, 28, item.quantity ? money(Number(item.quantity || 0) * parseMoney(item.unitPrice)) : "");
       y -= 28;
     }
     y -= 8;
@@ -1685,7 +1694,7 @@
     const ageText = cleanAge && !ageLooksLikePhone ? (/\bano/i.test(cleanAge) ? cleanAge : `${cleanAge} anos`) : "";
     const items = (order.items || [])
       .filter((item) => item.name || item.quantity || item.unitPrice)
-      .map((item) => `• ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * Number(item.unitPrice || 0))}`)
+      .map((item) => `• ${item.quantity || 1}x ${item.name || "Item"} - ${money(Number(item.quantity || 1) * parseMoney(item.unitPrice))}`)
       .join("\n") || "• Itens não informados";
     const personalization = [cleanChild, ageText].filter(Boolean).join(" - ") || "Não informado";
     return [
@@ -1703,7 +1712,7 @@
       "",
       `💰 *Valor do pedido:* ${money(orderTotal(order))}`,
       `💳 *Forma de pagamento:* ${optionLabel(order.paymentMethod, paymentLabels)}`,
-      `🔐 *Sinal:* ${money(Number(order.deposit || 0))}`,
+      `🔐 *Sinal:* ${money(parseMoney(order.deposit))}`,
       `🧾 *Saldo a receber:* ${money(balance(order))}`,
       `📝 *Observações:* ${order.notes || "Sem observações."}`
     ].filter(Boolean).join("\n");
@@ -1815,7 +1824,7 @@
           <h3>Itens vendidos</h3>
           <table>
             <thead><tr><th>Item</th><th>Quantidade</th><th>Valor</th></tr></thead>
-            <tbody>${(order.items || []).map((item) => `<tr><td>${item.name || "Item"}</td><td>${item.quantity || 0}</td><td>${money(Number(item.quantity || 0) * Number(item.unitPrice || 0))}</td></tr>`).join("")}</tbody>
+            <tbody>${(order.items || []).map((item) => `<tr><td>${item.name || "Item"}</td><td>${item.quantity || 0}</td><td>${money(Number(item.quantity || 0) * parseMoney(item.unitPrice))}</td></tr>`).join("")}</tbody>
           </table>
           <h3>PRODUÇÃO</h3>
           <table>
@@ -1848,18 +1857,18 @@
       productId: card.querySelector('[name="itemProduct"]')?.value || "",
       name: card.querySelector('[name="itemName"]').value.trim(),
       quantity: Number(card.querySelector('[name="itemQuantity"]').value || 0),
-      unitPrice: Number(card.querySelector('[name="itemPrice"]').value || 0)
+      unitPrice: parseMoney(card.querySelector('[name="itemPrice"]').value)
     })).filter((item) => item.name);
     const existing = state.orders.find((order) => order.id === state.editingId);
     const order = existing ? { ...existing } : { id: crypto.randomUUID(), createdAt: new Date().toISOString(), history: [] };
     const now = new Date().toISOString();
     const nextPaymentStatus = formData.get("paymentStatus");
-    const nextDeposit = Number(formData.get("deposit") || 0);
+    const nextDeposit = parseMoney(formData.get("deposit"));
     const rawPaymentDate = formData.get("paymentDate");
     const nextPaymentDate = nextPaymentStatus === "unpaid" ? "" : rawPaymentDate || paymentDateValue(existing) || todayISO();
     const paymentChanged = !existing
       || existing.paymentStatus !== nextPaymentStatus
-      || Number(existing.deposit || 0) !== nextDeposit
+      || parseMoney(existing.deposit) !== nextDeposit
       || (existing.paymentDate || "") !== nextPaymentDate;
     Object.assign(order, {
       client: formData.get("client").trim(),
@@ -1871,10 +1880,10 @@
       deliveryDate: formData.get("deliveryDate"),
       paymentMethod: formData.get("paymentMethod"),
       discountMode: formData.get("discountMode"),
-      discountValue: Number(formData.get("discountValue") || 0),
+      discountValue: parseMoney(formData.get("discountValue")),
       deliveryMethod: formData.get("deliveryMethod"),
       freightPayer: formData.get("freightPayer"),
-      freightValue: Number(formData.get("freightValue") || 0),
+      freightValue: parseMoney(formData.get("freightValue")),
       paymentStatus: nextPaymentStatus,
       paymentDate: nextPaymentDate,
       depositPercent: formData.get("depositPercent"),
@@ -2316,7 +2325,7 @@
       const product = existing ? { ...existing } : { id: crypto.randomUUID(), createdAt: new Date().toISOString() };
       Object.assign(product, {
         name: formData.get("name").trim(),
-        price: Number(formData.get("price") || 0),
+        price: parseMoney(formData.get("price")),
         notes: formData.get("notes").trim(),
         updatedAt: new Date().toISOString()
       });
@@ -2427,6 +2436,8 @@
 
   checkAuth();
 })();
+
+
 
 
 
