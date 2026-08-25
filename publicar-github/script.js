@@ -1451,7 +1451,7 @@
     return `
       <div class="item-card">
         <div class="form-grid">
-          <label class="span-2">Item do pedido<input name="itemName" list="productCatalogOptions" value="${escapeHtml(item.name || "")}" placeholder="Digite ou selecione um produto do catálogo" required><input name="itemProduct" type="hidden" value="${escapeHtml(item.productId || "")}"></label>
+          <label class="span-2">Item do pedido (catálogo ou manual)<input name="itemName" list="productCatalogOptions" value="${escapeHtml(item.name || "")}" placeholder="Digite o item ou selecione do catálogo" required><input name="itemProduct" type="hidden" value="${escapeHtml(item.productId || "")}"></label>
           <label>Quantidade<input name="itemQuantity" type="number" min="1" step="1" value="${item.quantity || 1}" required></label>
           <label>Valor unitário<input name="itemPrice" type="number" min="0" step="0.01" value="${item.unitPrice || ""}" required></label>
         </div>
@@ -2386,15 +2386,6 @@
       return;
     }
     if (!event.target.closest("#orderForm")) return;
-    if (event.target.name === "itemProduct") {
-      const product = state.products.find((item) => item.id === event.target.value);
-      const card = event.target.closest(".item-card");
-      if (product && card) {
-        card.querySelector('[name="itemName"]').value = product.name || "";
-        card.querySelector('[name="itemPrice"]').value = Number(product.price || 0).toFixed(2);
-        updateOrderFormTotal();
-      }
-    }
     if (event.target.name === "paymentStatus") {
       const paymentDateInput = event.target.form.elements.paymentDate;
       if (paymentDateInput) {
@@ -2436,6 +2427,7 @@
 
   checkAuth();
 })();
+
 
 
 
