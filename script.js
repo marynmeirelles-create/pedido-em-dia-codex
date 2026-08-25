@@ -704,7 +704,7 @@
       <form id="productForm" class="client-form">
         <div class="form-grid">
           <label>Nome do produto<input name="name" value="${escapeHtml(data.name || "")}" placeholder="Ex.: Topo de bolo" required></label>
-          <label>Preço unitário<input name="price" type="number" min="0" step="0.01" value="${data.price || 0}" required></label>
+          <label>Preço unitário<input name="price" type="number" min="0" step="0.01" value="${data.price || ""}" required></label>
           <label class="span-2">Observações<textarea name="notes" placeholder="Tamanho, material ou observação sobre o produto">${escapeHtml(data.notes || "")}</textarea></label>
         </div>
         <div class="actions">
@@ -1253,16 +1253,16 @@
   function renderForm(order) {
     const editing = Boolean(order);
     const data = order || {
-      items: [{ name: "", quantity: 1, unitPrice: 0 }],
+      items: [{ name: "", quantity: 1, unitPrice: "" }],
       paymentStatus: "unpaid",
       paymentDate: "",
       depositPercent: "",
       paymentMethod: "",
       discountMode: "value",
-      discountValue: 0,
+      discountValue: "",
       deliveryMethod: "",
       freightPayer: "client",
-      freightValue: 0
+      freightValue: ""
     };
     state.editingId = editing ? order.id : null;
     $("#orderFormView").innerHTML = `
@@ -1274,7 +1274,7 @@
           <label>Idade<input name="age" value="${data.age || ""}"></label>
           <label>Tema<input name="theme" value="${data.theme || ""}" required></label>
           <label>Data da festa<input name="partyDate" type="date" value="${data.partyDate || ""}"></label>
-          <label>Data da entrega<input name="deliveryDate" type="date" value="${data.deliveryDate || todayISO()}" required></label>
+          <label>Data da entrega<input name="deliveryDate" type="date" value="${data.deliveryDate || ""}" required></label>
         </div>
         <h3>Itens do pedido</h3>
         <div id="itemsBox" class="grid">${(data.items || []).map(itemFields).join("")}</div>
@@ -1297,7 +1297,7 @@
               <option value="studio" ${data.freightPayer === "studio" ? "selected" : ""}>Ateliê</option>
             </select>
           </label>
-          <label class="span-2">Valor do frete<input name="freightValue" type="number" min="0" step="0.01" value="${data.freightValue || 0}"></label>
+          <label class="span-2">Valor do frete<input name="freightValue" type="number" min="0" step="0.01" value="${data.freightValue || ""}"></label>
           <label>Forma de pagamento
             <select name="paymentMethod">
               <option value="" ${!data.paymentMethod ? "selected" : ""}>Selecionar forma</option>
@@ -1315,7 +1315,7 @@
               <option value="percent" ${data.discountMode === "percent" ? "selected" : ""}>Porcentagem %</option>
             </select>
           </label>
-          <label class="span-2">Valor ou porcentagem do desconto<input name="discountValue" type="number" min="0" step="0.01" value="${data.discountValue || 0}"></label>
+          <label class="span-2">Valor ou porcentagem do desconto<input name="discountValue" type="number" min="0" step="0.01" value="${data.discountValue || ""}"></label>
           <label>Status de pagamento
             <select name="paymentStatus">
               <option value="unpaid" ${data.paymentStatus === "unpaid" ? "selected" : ""}>Não pago</option>
@@ -1408,7 +1408,7 @@
           </label>
           <label class="span-2">Nome do item<input name="itemName" value="${escapeHtml(item.name || "")}" required></label>
           <label>Quantidade<input name="itemQuantity" type="number" min="1" step="1" value="${item.quantity || 1}" required></label>
-          <label>Valor unitário<input name="itemPrice" type="number" min="0" step="0.01" value="${item.unitPrice || 0}" required></label>
+          <label>Valor unitário<input name="itemPrice" type="number" min="0" step="0.01" value="${item.unitPrice || ""}" required></label>
         </div>
         <button type="button" class="btn btn-soft" data-remove-item>Excluir item</button>
       </div>
@@ -2390,6 +2390,7 @@
 
   checkAuth();
 })();
+
 
 
 

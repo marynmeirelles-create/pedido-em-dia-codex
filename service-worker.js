@@ -1,14 +1,14 @@
-const CACHE_NAME = "pedido-em-dia-v55";
+const CACHE_NAME = "pedido-em-dia-v56";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=55",
-  "./layout-fix.css?v=55",
-  "./script.js?v=55",
-  "./compat-fix.js?v=55",
-  "./db.js?v=55",
-  "./backup.js?v=55",
-  "./manifest.json?v=55",
+  "./style.css?v=56",
+  "./layout-fix.css?v=56",
+  "./script.js?v=56",
+  "./compat-fix.js?v=56",
+  "./db.js?v=56",
+  "./backup.js?v=56",
+  "./manifest.json?v=56",
   "./assets/pedido-em-dia-logo.png",
   "./assets/pedido-em-dia-logo-transparent.png",
   "./assets/icon-192.png",
@@ -53,6 +53,7 @@ self.addEventListener("notificationclick", (event) => {
     })
   );
 });
+
 
 
 
