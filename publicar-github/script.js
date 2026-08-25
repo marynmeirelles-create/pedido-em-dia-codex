@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
   const state = { orders: [], clients: [], products: [], currentView: "day", editingId: null, editingClientId: null, editingProductId: null, agendaMonth: new Date().getMonth(), agendaYear: new Date().getFullYear(), financeMonth: todayISO().slice(0, 7), orderSearch: "", orderPhaseFilter: "" };
@@ -1093,7 +1093,7 @@
         <form id="atelierDataForm" class="settings-form">
           <label>Nome do ateliê<input name="studioName" value="${escapeHtml(studioName)}" placeholder="Nome do seu ateliê"></label>
           <label>Seu nome<input name="ownerName" value="${escapeHtml(ownerName)}" placeholder="Seu nome"></label>
-          <label>WhatsApp (com DDD)<input name="studioWhatsapp" value="${escapeHtml(studioWhatsapp)}" inputmode="tel" placeholder="31 98808-9478"></label>
+          <label>WhatsApp (com DDD)<input name="studioWhatsapp" value="${escapeHtml(studioWhatsapp)}" inputmode="tel" placeholder="Digite o WhatsApp do ateliê"></label>
           <label>Logomarca do ateliê<input id="studioLogoFile" type="file" accept="image/*"></label>
           ${studioLogo ? `
             <div class="logo-preview-row">
