@@ -325,6 +325,40 @@
     alert("Para salvar como aplicativo:\n\nNo Android/Chrome: toque no menu de três pontinhos e escolha Instalar app ou Adicionar à tela inicial.\n\nNo iPhone/Safari: toque em Compartilhar e depois em Adicionar à Tela de Início.");
   }
 
+
+  function normalizeProductName(name) {
+    return String(name || "").trim().toLocaleLowerCase("pt-BR");
+  }
+
+  async function offerToSaveManualProducts(order) {
+    const existingNames = new Set(state.products.map((product) => normalizeProductName(product.name)));
+    const manualItems = [];
+    for (const item of order.items || []) {
+      const name = String(item.name || "").trim();
+      const price = Number(item.unitPrice || 0);
+      const key = normalizeProductName(name);
+      if (!name || !price || item.productId || existingNames.has(key)) continue;
+      existingNames.add(key);
+      manualItems.push({ name, price });
+    }
+    if (!manualItems.length) return;
+    const list = manualItems.map((item) => `- ${item.name}: ${money(item.price)}`).join("\n");
+    const ok = confirm(`Você quer salvar este produto na aba Produtos para usar nos próximos pedidos?\n\n${list}`);
+    if (!ok) return;
+    const now = new Date().toISOString();
+    for (const item of manualItems) {
+      await AtelieDB.put("products", {
+        id: crypto.randomUUID(),
+        name: item.name,
+        price: item.price,
+        notes: "",
+        createdAt: now,
+        updatedAt: now
+      });
+    }
+    await loadProducts();
+    showToast(manualItems.length === 1 ? "Produto salvo na tabela de preços." : "Produtos salvos na tabela de preços.");
+  }
   async function saveOrder(order, reason) {
     await AtelieDB.snapshot(reason);
     await AtelieDB.put("orders", order);
@@ -2289,6 +2323,7 @@
     const order = collectOrder(event.target);
     if (!order.items.length) return showToast("Adicione pelo menos um item.");
     await saveOrder(order, state.editingId ? "Editar pedido" : "Criar pedido");
+    await offerToSaveManualProducts(order);
     showToast(state.editingId ? "Pedido atualizado." : "Pedido salvo.");
     renderDetail(order);
     setScreen("detail");
@@ -2390,6 +2425,8 @@
 
   checkAuth();
 })();
+
+
 
 
 
